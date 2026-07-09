@@ -1,0 +1,34 @@
+Error: [4021]
+   ╭─[ /home/lily/moonforge_fixtures/fixture_gen/syntax_error/syntax_error.mbt:3:18 ]
+   │
+ 3 │   proof_require: nonneg(n)
+   │                  ───┬──  
+   │                     ╰──── The value identifier nonneg is unbound.
+───╯
+Error: [4207]
+   ╭─[ /home/lily/moonforge_fixtures/fixture_gen/syntax_error/syntax_error.mbt:3:18 ]
+   │
+ 3 │   proof_require: nonneg(n)
+   │                  ────┬────  
+   │                      ╰────── only direct logic-function calls, pure function calls, supported function-value applications, and primitive operators are supported in logic body
+───╯
+Error: [3002]
+   ╭─[ /home/lily/moonforge_fixtures/fixture_gen/syntax_error/syntax_error.mbt:3:27 ]
+   │
+ 3 │   proof_require: nonneg(n)
+   │                           │ 
+   │                           ╰─ Unexpected line break here, missing `,` or `}` at the end of this line.
+───╯
+Warning: [0001]
+   ╭─[ /home/lily/moonforge_fixtures/fixture_gen/syntax_error/syntax_error.mbtp:1:11 ]
+   │
+ 1 │ predicate is_max(xs : FixedArray[Int], idx : Int) {
+   │           ───┬──  
+   │              ╰──── Warning (unused_value): Unused function 'is_max'
+───╯
+moonforge/fixture_gen/syntax_error
+  Succeeded: 1 goals proved
+
+Summary:
+  1 of 1 packages proved
+  1 goals proved

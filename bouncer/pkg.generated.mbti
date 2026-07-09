@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/bouncer"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn build_prompt(Domain, String) -> Prompt
+
+pub fn check_purity(String) -> Array[RejectionReason]
+
+pub fn classify_domain(String) -> Domain
+
+// Errors
+
+// Types and methods
+pub(all) enum Domain {
+  Defi
+  Graph
+  Unclassified
+} derive(Eq, Show, @debug.Debug)
+
+pub struct Prompt {
+  system_prompt : String
+  user_task : String
+} derive(Eq, Show, @debug.Debug)
+
+pub(all) enum RejectionReason {
+  SideEffectingImport(pkg_name~ : String)
+  SideEffectingCall(call~ : String)
+} derive(Eq, Show, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

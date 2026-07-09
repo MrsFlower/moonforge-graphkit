@@ -1,0 +1,14 @@
+Error: [4195]
+    ╭─[ /mnt/c/Users/15866/Documents/codeheaven/moonbit/proveTask/moon-forge/fixtures/target_examples/isqrt_demo/isqrt/isqrt.mbt:19:1 ]
+    │
+ 19 │ invariant: hi >= 1,
+    │ ─────────┬────────
+    │          ╰────────── Invalid field 'invariant' in where clause. Only 'proof_invariant', 'proof_yield', and 'proof_reasoning' are allowed.
+────╯
+Error: [4195]
+    ╭─[ /mnt/c/Users/15866/Documents/codeheaven/moonbit/proveTask/moon-forge/fixtures/target_examples/isqrt_demo/isqrt/isqrt.mbt:20:1 ]
+    │
+ 20 │ invariant: lo + 1 <= hi,
+    │ ───────────┬───────────
+    │            ╰───────────── Invalid field 'invariant' in where clause. Only 'proof_invariant', 'proof_yield', and 'proof_reasoning' are allowed.
+────╯

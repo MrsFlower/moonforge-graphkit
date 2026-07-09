@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/shell"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub async fn run_capture(String, Array[String], cwd? : String) -> CommandResult
+
+pub async fn run_capture_merged(String, Array[String], cwd? : String) -> CommandResult
+
+// Errors
+
+// Types and methods
+pub struct CommandResult {
+  exit_code : Int
+  stdout : String
+  stderr : String
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

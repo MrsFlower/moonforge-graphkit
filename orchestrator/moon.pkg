@@ -1,0 +1,20 @@
+import {
+  "moonforge/moon_forge/llm",
+  "moonforge/moon_forge/sanitizer",
+  "moonforge/moon_forge/injector",
+  "moonforge/moon_forge/bouncer",
+  "moonforge/moon_forge/prover_loop",
+  "moonbitlang/async/fs",
+}
+
+import {
+  "moonbitlang/async",
+  "moonbitlang/core/env",
+} for "test"
+
+import {
+  "moonbitlang/async",
+  "moonbitlang/core/json",
+} for "wbtest"
+
+supported_targets = "+native"

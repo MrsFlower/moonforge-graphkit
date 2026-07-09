@@ -1,0 +1,8 @@
+options(
+  "proof-enabled": true,
+)
+
+import {
+  "moonbitlang/core/quickcheck",
+}
+

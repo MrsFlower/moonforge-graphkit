@@ -1,0 +1,9 @@
+moonforge/fixture_gen/assertion_failed
+  Failed: 0 goals proved, 1 timeout
+  WhyML: _build/verif/assertion_failed/pkg_9_moonforge_12_fixture_ugen_17_assertion_ufailed.mlw
+  Report: _build/verif/assertion_failed/assertion_failed.proof.json
+  Failed goals: 1
+
+Summary:
+  0 of 1 packages proved
+  0 goals proved, 1 timeout

@@ -1,0 +1,15 @@
+import {
+  "moonforge/moon_forge/shell",
+  "moonbitlang/async/fs",
+  "moonbitlang/core/json",
+}
+
+import {
+  "moonbitlang/async",
+} for "test"
+
+import {
+  "moonbitlang/async",
+} for "wbtest"
+
+supported_targets = "+native"

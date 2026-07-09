@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/prover_loop"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn build_repair_instructions(FailureKind, ProveOutcome) -> String
+
+pub fn classify(ProveOutcome) -> FailureKind
+
+pub fn is_success(ProveOutcome) -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) enum FailureKind {
+  SyntaxError
+  Unproved(has_invalid~ : Bool, timeout_goals~ : Int, unknown_goals~ : Int)
+  ProverCrashed
+  Unknown
+} derive(Eq, Show, @debug.Debug)
+
+pub struct LocalProveRunner {
+}
+pub impl ProveRunner for LocalProveRunner
+
+pub struct ProveOutcome {
+  exit_code : Int
+  stdout : String
+  stderr : String
+  proof_json : Json?
+}
+
+pub struct WslProveRunner {
+  distro : String
+  env_setup : String
+}
+pub fn WslProveRunner::new(String, String) -> Self
+pub impl ProveRunner for WslProveRunner
+
+// Type aliases
+
+// Traits
+pub(open) trait ProveRunner {
+  async fn run_prove(Self, String, String, String) -> ProveOutcome
+}
+

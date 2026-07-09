@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/llm"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct HttpBackend {
+  base_url : String
+  api_key : String
+  model : String
+}
+pub fn HttpBackend::new(String, String, String) -> Self
+pub impl LlmBackend for HttpBackend
+
+pub struct ShellBackend {
+  command : String
+  model : String?
+  scratch_dir : String
+}
+pub fn ShellBackend::new(String, model? : String) -> Self
+pub impl LlmBackend for ShellBackend
+
+// Type aliases
+
+// Traits
+pub(open) trait LlmBackend {
+  async fn complete(Self, String, String) -> String
+}
+

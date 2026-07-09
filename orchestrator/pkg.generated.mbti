@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/orchestrator"
+
+import {
+  "moonforge/moon_forge/llm",
+  "moonforge/moon_forge/prover_loop",
+}
+
+// Values
+pub async fn[B : @llm.LlmBackend, R : @prover_loop.ProveRunner] run(B, R, RunConfig) -> RunResult
+
+// Errors
+
+// Types and methods
+pub(all) struct RunConfig {
+  module_root : String
+  package_path : String
+  pkg_name : String
+  target_file : String
+  start_tag : String
+  end_tag : String
+  user_task : String
+  max_rounds : Int
+}
+
+pub(all) enum RunResult {
+  VerificationSuccess(rounds_used~ : Int)
+  NeedsHumanReview(reason~ : String)
+  RoundsExhausted(last_kind~ : @prover_loop.FailureKind, last_outcome~ : @prover_loop.ProveOutcome)
+}
+
+// Type aliases
+
+// Traits
+

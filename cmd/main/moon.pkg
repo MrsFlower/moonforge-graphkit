@@ -1,0 +1,7 @@
+// import {
+//   "moonforge/moon_forge" @lib,
+// }
+
+options(
+  "is-main": true,
+)

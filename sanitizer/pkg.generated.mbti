@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/sanitizer"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn strip_markdown(String) -> SanitizeResult
+
+// Errors
+
+// Types and methods
+pub enum SanitizeResult {
+  Clean(code~ : String)
+  NeedsReview(reason~ : String)
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/injector"
+
+// Values
+pub fn inject(String, String, String, String) -> String raise
+
+pub fn locate_region(String, String, String) -> TaggedRegion raise
+
+pub fn replace_region(TaggedRegion, String) -> String
+
+// Errors
+
+// Types and methods
+pub struct TaggedRegion {
+  before : String
+  start_tag_line : String
+  region : String
+  end_tag_line : String
+  after : String
+}
+
+// Type aliases
+
+// Traits
+
