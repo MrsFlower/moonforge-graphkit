@@ -369,6 +369,52 @@ system_prompt` 里额外补充任何指导——`scaffold`/`sanitizer` 现有设
 更深的能力上（手动终止变式、图领域的量化谓词），不需要在"能不能生成多个
 函数"这一层反复测试。
 
+### `proof_decrease` 手动终止变式：语法本身写得对，缺的是"辅助 lemma"这个技巧
+
+A* 就绪度评估的 Level 2：递归函数（合并两个链表）需要手动声明终止度量，因为
+每次递归有时缩小 `a` 有时缩小 `b`，不是 `loopvar < expr` 这种能自动推导的
+形状。`baseline_system_prompt` 之前只把 `proof_decrease` 列进语法白名单，
+从没给过用法示例（跟这次任务修的前四条坑是同一类问题）。
+
+**第一次真实测试**（codex/gpt-5.5 后端）：生成的 `proof_decrease:
+merge_measure(a, b)` 语法完全正确，`merge_measure`/`list_len` 定义也对，
+`moon check` 一次通过。但真实跑 `moon prove` 才发现问题：
+
+```json
+{"result":"proof_failure","summary":{"valid":2,"invalid":0,"timeout":1,...},
+ "failures":[{"goal":"merge'vc","explanation":"variant decrease",
+   "headline":"cannot prove variant decrease","result":"Timeout",
+   "goal_formula":"0 <= merge_measure a b"}]}
+```
+
+三个求解器（Alt-Ergo/CVC5/Z3）全部超时在同一个目标：`0 <= merge_measure a
+b`。这是"证明一个递归定义的度量函数非负"，纯 SMT 求解器不擅长做这种需要
+结构归纳的证明——**这正是 `scaffold` 从零生成路径第一次真实撞上"需要引入
+辅助引理"这个技巧的场景**（`verified` 仓库里 `skew_heap.mbtp:139`/
+`leftist_heap.mbtp` 早就有这个模式：`lemma size_model_nonneg(h) where {
+proof_decrease: h, proof_ensure: 0 <= size_model(h) } { match h { Empty
+=> (); Node(_, l, r) => { size_model_nonneg(l); size_model_nonneg(r) } }
+}`，`moon-forge` 的 prompt 从未引用过这个模式）。
+
+**修复**：在 `baseline_system_prompt` 里补一条规则 + 一个完整的 `lemma`
+worked example（`list_len_nonneg`，直接照抄 `skew_heap` 的结构），并把
+`lemma` 也加进语法白名单那一行（之前只列了 `proof_*` 前缀关键字，没提过
+`lemma` 这个独立的声明形式）。
+
+**修复后重测**（同一个任务，同一个 codex 后端）：`scaffold` 自己补上了
+`list_len_nonneg` + `merge_measure_nonneg` 两个 lemma，**并且自己想出了
+一个比原任务描述更优的写法**——把 `merge` 改成单分支递归（交换 `a`/`b`
+位置，让每次调用只需要证明 `b` 缩小），还在递归调用点手动加了一句
+`proof_assert merge_measure(b, rest) < merge_measure(a, b)` 帮求解器过
+变式检查。真实 `moon prove`：`Succeeded: 3 goals proved`，完全证明通过。
+
+**教训**：`lemma` 声明（无返回类型、专门用来注册一个待证事实、可以递归调用
+自身完成结构归纳）是这个工具链里一个独立于 `proof_assert`/`proof_invariant`
+的证明技巧，且是"绕过 SMT 求解器归纳能力上限"的关键手段——挑战二描述里提到
+的"引导 AI 学会引入辅助引理，把复杂计算拆成多步简单证明"，本质上就是这个
+`lemma` 机制的另一种应用场景。这条经验现在已经在 A* 场景下拿到第一个真实
+证明成功的先例，可以直接复用到挑战二的非线性算术拆解上。
+
 ## 6. 关于"自主 agent 当纯文本生成器用"的一个设计原则
 
 `codex exec` 本质是一个自主编码 agent，不是单纯的"prompt 进、文本出"补全

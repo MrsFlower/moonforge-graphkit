@@ -20,9 +20,9 @@ let baseline_system_prompt : String =
   #|
   #|- Use only the specification syntax already used in this codebase's own
   #|  verified examples: `proof_require`, `proof_ensure`, `proof_invariant`,
-  #|  `proof_assert`, `proof_reasoning`, `proof_yield`, `proof_decrease`, the
-  #|  quantifiers `∀` and `∃`, and named predicates defined in a
-  #|  `.mbtp` file.
+  #|  `proof_assert`, `proof_reasoning`, `proof_yield`, `proof_decrease`,
+  #|  `lemma` declarations, the quantifiers `∀` and `∃`, and named
+  #|  predicates defined in a `.mbtp` file.
   #|- A function's precondition/postcondition MUST be attached as a `where`
   #|  clause on the function signature itself, before the opening `{` of the
   #|  function body — never as statements inside the body. The exact shape
@@ -72,6 +72,44 @@ let baseline_system_prompt : String =
   #|  assignable), and the value produced when the loop condition becomes
   #|  false is written once in the trailing `nobreak { ... }` block, not
   #|  as a `return`/trailing expression after the loop.
+  #|- For a RECURSIVE function whose recursive calls do not all shrink the
+  #|  same argument in the same way (so the automatic termination check
+  #|  cannot apply), declare an explicit `proof_decrease: <measure>,` field
+  #|  in the function's `where` clause, naming a helper function that
+  #|  computes an integer measure over the arguments and strictly decreases
+  #|  on every recursive call. The SMT solver CANNOT automatically prove
+  #|  that a recursively-defined measure function (like a list/tree size)
+  #|  is non-negative — you must state that fact yourself as a separate
+  #|  `lemma` (a declaration with a `where` clause and an EMPTY body `{}`,
+  #|  used only to register a fact the prover can then reuse) and, if the
+  #|  measure combines a recursive structural fact across branches, prove
+  #|  that fact by explicitly calling the same lemma on each sub-structure
+  #|  inside the lemma's body. For example, for the recursive type
+  #|  `enum IntList { Nil; Cons(Int, IntList) }` with `list_len`:
+  #|
+  #|  ```mbt
+  #|  lemma list_len_nonneg(xs : IntList) where {
+  #|    proof_decrease: xs,
+  #|    proof_ensure: 0 <= list_len(xs),
+  #|  } {
+  #|    match xs {
+  #|      Nil => ()
+  #|      Cons(_, rest) => list_len_nonneg(rest)
+  #|    }
+  #|  }
+  #|  ```
+  #|
+  #|  Note: a `lemma` has no return type (it is always proving a fact, not
+  #|  computing a value), its body is either empty `{}` (when the fact
+  #|  follows immediately from the definitions) or, as above, recurses by
+  #|  directly calling itself on the sub-structure(s) so the prover can
+  #|  chain the already-proved fact for the smaller case into the current
+  #|  case — do not try to prove this kind of fact inline inside
+  #|  `proof_assert`/`proof_ensure` on the main function; declare it as its
+  #|  own named `lemma` first, the same way this toolchain's own verified
+  #|  examples do (see `size_model_nonneg`/`count_nonneg` style lemmas
+  #|  paired with `merge`-style functions that use a derived
+  #|  `proof_decrease` measure).
   #|- Do NOT use the older `#requires(...)`, `#ensures(...)`, or bare
   #|  `invariant: ...,` syntax. That syntax belongs to a different, older
   #|  MoonBit toolchain version (as seen in some reference repos this
