@@ -23,6 +23,55 @@ let baseline_system_prompt : String =
   #|  `proof_assert`, `proof_reasoning`, `proof_yield`, `proof_decrease`, the
   #|  quantifiers `∀` and `∃`, and named predicates defined in a
   #|  `.mbtp` file.
+  #|- A function's precondition/postcondition MUST be attached as a `where`
+  #|  clause on the function signature itself, before the opening `{` of the
+  #|  function body — never as statements inside the body. The exact shape
+  #|  is:
+  #|
+  #|  ```mbt
+  #|  pub fn isqrt(n : Int) -> Int where {
+  #|    proof_require: nonneg(n),
+  #|    proof_ensure: result => isqrt_ok(n, result),
+  #|  } {
+  #|    // ... function body ...
+  #|  }
+  #|  ```
+  #|
+  #|  Note every field ends with a colon and a trailing comma, `result` is
+  #|  only in scope inside `proof_ensure` (it names the return value), and
+  #|  this `where { ... }` block sits between the return type and the
+  #|  function body's `{`, not inside it. Writing `proof_require nonneg(n)`
+  #|  as a bare statement inside the function body is invalid and will not
+  #|  compile.
+  #|- A loop that this toolchain can attach a `proof_invariant` block to
+  #|  MUST be written with `for <vars> = <inits>; <cond>; { ... continue
+  #|  <new-vars> }` and end with a single `nobreak { <result> }` block —
+  #|  never a plain `while`/two-statement loop that mutates loop variables
+  #|  by assignment. The exact shape is:
+  #|
+  #|  ```mbt
+  #|  for lo = 0, hi = n + 1; lo < hi - 1; {
+  #|    let mid = lo + (hi - lo) / 2
+  #|    if mid * mid <= n {
+  #|      continue mid, hi
+  #|    } else {
+  #|      continue lo, mid
+  #|    }
+  #|  } nobreak {
+  #|    lo
+  #|  } where {
+  #|    proof_invariant: lo <= hi,
+  #|  }
+  #|  ```
+  #|
+  #|  Note there is exactly ONE loop body block (not a body block followed
+  #|  by a second `{ ... }`), each branch that updates the loop's state
+  #|  ends with `continue <new-values-in-declaration-order>` instead of
+  #|  assigning to the loop variables (`lo = mid` inside the loop body is
+  #|  invalid — loop variables introduced by `for <var> = <init>` are not
+  #|  assignable), and the value produced when the loop condition becomes
+  #|  false is written once in the trailing `nobreak { ... }` block, not
+  #|  as a `return`/trailing expression after the loop.
   #|- Do NOT use the older `#requires(...)`, `#ensures(...)`, or bare
   #|  `invariant: ...,` syntax. That syntax belongs to a different, older
   #|  MoonBit toolchain version (as seen in some reference repos this
@@ -35,9 +84,19 @@ let baseline_system_prompt : String =
   #|- Do not invent new attribute syntax, macros, or annotations. If a
   #|  property cannot be expressed with the constructs above, say so instead
   #|  of guessing at new syntax.
+  #|- Boolean AND/OR inside predicates, `proof_invariant`, `proof_require`,
+  #|  and `proof_ensure` MUST use the logical operators `&&`/`||`, never
+  #|  the bitwise operators `&`/`|` (MoonBit's `Bool` type does not
+  #|  implement `&`/`|`, so `(a <= b) & (c > d)` is a type error, not a
+  #|  logical-AND). Always write `(a <= b) && (c > d)`.
   #|- `∀`/`∃` must appear at the top level of a predicate body, not
   #|  nested inside `&&`/`||`. Move side conditions into the consequent of an
   #|  implication instead.
+  #|- A quantified implication ("for all x satisfying P, Q holds") uses the
+  #|  arrow `→`, never the plain ASCII `->` (which this toolchain parses as
+  #|  MoonBit's ordinary function-arrow token, not logical implication, and
+  #|  will reject inside a quantifier body). Always write
+  #|  `∀ i : Int, 0 <= i && i < lo → i * i <= n`, not `... -> ...`.
   #|- Loop termination variants are only auto-generated for conditions
   #|  shaped like `loopvar < expr`. Prefer restructuring a loop into that
   #|  shape over leaving termination unproven.

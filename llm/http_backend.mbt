@@ -96,38 +96,50 @@ pub fn HttpBackend::new(
 pub let leanstral_prompt_addendum : String =
   #|You are Leanstral, trained for Lean 4 proof engineering. This task is
   #|MoonBit, not Lean 4. Here is a worked example of the exact shape this
-  #|toolchain expects for a loop's invariant block (a different function
-  #|than the one you are asked about below, shown only to demonstrate the
-  #|required syntax):
+  #|toolchain expects for a whole function's contract AND a loop's
+  #|invariant block (a different function than the one you are asked
+  #|about below, shown only to demonstrate the required syntax):
   #|
   #|```mbt
   #|// Function: find the largest index `i` in a sorted, ascending array
   #|// `xs` such that `xs[i] <= target` (or -1 if none exists).
-  #|// proof_ensure: result => search_post(xs, target, result)
-  #|for lo = -1, hi = xs.length(); lo < hi - 1; {
-  #|  let mid = lo + (hi - lo) / 2
-  #|  if xs[mid] <= target {
-  #|    continue mid, hi
-  #|  } else {
-  #|    continue lo, mid
+  #|fn search(xs : Array[Int], target : Int) -> Int where {
+  #|  proof_require: sorted(xs),
+  #|  proof_ensure: result => search_post(xs, target, result),
+  #|} {
+  #|  for lo = -1, hi = xs.length(); lo < hi - 1; {
+  #|    let mid = lo + (hi - lo) / 2
+  #|    if xs[mid] <= target {
+  #|      continue mid, hi
+  #|    } else {
+  #|      continue lo, mid
+  #|    }
+  #|  } nobreak {
+  #|    lo
+  #|  } where {
+  #|    proof_invariant: -1 <= lo,
+  #|    proof_invariant: lo < hi,
+  #|    proof_invariant: hi <= xs.length(),
+  #|    proof_invariant: below_target(xs, target, lo),
   #|  }
-  #|} nobreak {
-  #|  lo
-  #|} where {
-  #|  proof_invariant: -1 <= lo,
-  #|  proof_invariant: lo < hi,
-  #|  proof_invariant: hi <= xs.length(),
-  #|  proof_invariant: below_target(xs, target, lo),
   #|}
   #|```
   #|
-  #|Notice two things about every `proof_invariant` line above: (1) the
-  #|field name is always `proof_invariant:`, never the older `invariant:`;
-  #|and (2) each one only mentions this loop's own state variables (`lo`,
-  #|`hi`) and predicates already declared elsewhere (`below_target`) — none
-  #|of them mention `result`, because `result` is the function's return
-  #|value, bound only in the function-level `proof_ensure` postcondition,
-  #|not inside the loop body. Follow this same shape for the task below.
+  #|Notice several things about this shape: (1) the function's own
+  #|precondition/postcondition go in a `where { ... }` clause attached to
+  #|the function SIGNATURE, between the return type and the opening `{` of
+  #|the body — never as bare statements inside the body (`proof_require
+  #|sorted(xs)` written as a body statement is invalid and will not
+  #|compile); (2) every field there uses a colon and ends with a comma
+  #|(`proof_require: ...,`, `proof_ensure: ...,`); (3) the loop's own
+  #|`where { ... }` block (attached to the loop, not the function) is a
+  #|separate block using `proof_invariant:` lines, never the older
+  #|`invariant:`; and (4) each `proof_invariant` line only mentions this
+  #|loop's own state variables (`lo`, `hi`) and predicates already declared
+  #|elsewhere (`below_target`) — none of them mention `result`, because
+  #|`result` is the function's return value, bound only in the
+  #|function-level `proof_ensure` postcondition, not inside the loop body.
+  #|Follow this same shape for the task below.
 
 ///|
 pub impl LlmBackend for HttpBackend with fn complete(
