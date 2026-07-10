@@ -22,9 +22,7 @@ async test "run_check_gate passes for a package moon check accepts" {
 
 ///|
 async test "run_check_gate fails and classifies SyntaxError for an unbound predicate name" {
-  let result = @prover_loop.run_check_gate(
-    fixture_module_root(), "broken_pkg",
-  )
+  let result = @prover_loop.run_check_gate(fixture_module_root(), "broken_pkg")
   assert_true(!result.passed)
   assert_eq(result.kind, Some(@prover_loop.SyntaxError))
   assert_true(result.raw_output.contains("is unbound"))

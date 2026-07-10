@@ -30,7 +30,10 @@ impl @prover_loop.ProveRunner for AlwaysSucceedsRunner with fn run_prove(
 /// A reply carrying a loop whose invariant region is tagged and left
 /// empty, matching what `generate` is instructed to produce when
 /// `invariant_tags` is `Some`.
-fn scaffold_reply_with_tagged_loop(start_tag : String, end_tag : String) -> String {
+fn scaffold_reply_with_tagged_loop(
+  start_tag : String,
+  end_tag : String,
+) -> String {
   "```mbt:searchy.mbt\npub fn searchy(n : Int) -> Int {\n  for lo = 0, hi = n; lo < hi; {\n    continue lo + 1, hi\n  } nobreak {\n    lo\n  } where {\n    \{start_tag}\n    \{end_tag}\n  }\n}\n```\n```mbtp:searchy.mbtp\npredicate ok(n : Int) { n >= 0 }\n```"
 }
 
@@ -54,7 +57,10 @@ async test "generate_and_fill rejects a config whose invariant_tags is None" {
   }
   try
     generate_and_fill(
-      backend, AlwaysPassesGate::{  }, AlwaysSucceedsRunner::{  }, config,
+      backend,
+      AlwaysPassesGate::{  },
+      AlwaysSucceedsRunner::{  },
+      config,
     )
     |> ignore
   catch {
@@ -88,7 +94,10 @@ async test "generate_and_fill chains a successful scaffold into a successful fil
     fill_max_rounds: 1,
   }
   let result = generate_and_fill(
-    backend, AlwaysPassesGate::{  }, AlwaysSucceedsRunner::{  }, config,
+    backend,
+    AlwaysPassesGate::{  },
+    AlwaysSucceedsRunner::{  },
+    config,
   )
   match result {
     FullSuccess(fill_rounds_used~, ..) => assert_eq(fill_rounds_used, 1)
@@ -122,7 +131,10 @@ async test "generate_and_fill surfaces a scaffold-stage failure without attempti
     fill_max_rounds: 1,
   }
   let result = generate_and_fill(
-    backend, AlwaysPassesGate::{  }, AlwaysSucceedsRunner::{  }, config,
+    backend,
+    AlwaysPassesGate::{  },
+    AlwaysSucceedsRunner::{  },
+    config,
   )
   assert_true(result is ScaffoldStageFailed(_))
 }

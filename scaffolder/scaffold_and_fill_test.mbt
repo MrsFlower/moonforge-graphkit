@@ -77,7 +77,10 @@ async test "generate_and_fill scaffolds a fresh isqrt package and fills its inva
     fill_max_rounds: 5,
   }
   let result = @scaffolder.generate_and_fill(
-    backend, @prover_loop.RealCheckGate::{  }, prove_runner, config,
+    backend,
+    @prover_loop.RealCheckGate::{  },
+    prove_runner,
+    config,
   )
   match result {
     @scaffolder.FullSuccess(fill_rounds_used~, ..) =>

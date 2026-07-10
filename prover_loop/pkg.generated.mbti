@@ -12,9 +12,18 @@ pub fn classify(ProveOutcome) -> FailureKind
 
 pub fn is_success(ProveOutcome) -> Bool
 
+pub async fn run_check_gate(String, String) -> CheckGateResult
+
 // Errors
 
 // Types and methods
+pub struct CheckGateResult {
+  passed : Bool
+  kind : FailureKind?
+  raw_output : String
+}
+pub fn CheckGateResult::new(Bool, FailureKind?, String) -> Self
+
 pub(all) enum FailureKind {
   SyntaxError
   Unproved(has_invalid~ : Bool, timeout_goals~ : Int, unknown_goals~ : Int)
@@ -22,7 +31,7 @@ pub(all) enum FailureKind {
   Unknown
 } derive(Eq, Show, @debug.Debug)
 
-pub struct LocalProveRunner {
+pub(all) struct LocalProveRunner {
 }
 pub impl ProveRunner for LocalProveRunner
 
@@ -32,6 +41,11 @@ pub struct ProveOutcome {
   stderr : String
   proof_json : Json?
 }
+pub fn ProveOutcome::new(Int, String, String, Json?) -> Self
+
+pub(all) struct RealCheckGate {
+}
+pub impl CheckGate for RealCheckGate
 
 pub struct WslProveRunner {
   distro : String
@@ -43,6 +57,10 @@ pub impl ProveRunner for WslProveRunner
 // Type aliases
 
 // Traits
+pub(open) trait CheckGate {
+  async fn run_check(Self, String, String) -> CheckGateResult
+}
+
 pub(open) trait ProveRunner {
   async fn run_prove(Self, String, String, String) -> ProveOutcome
 }

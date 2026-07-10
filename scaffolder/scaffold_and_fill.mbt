@@ -48,7 +48,11 @@ pub(all) enum ScaffoldAndFillResult {
 /// `.mbt` file to fill that region in. `config.scaffold.invariant_tags`
 /// must be `Some((start_tag, end_tag))` — those exact tag lines are what
 /// `orchestrator.run` is told to look for in the generated file.
-pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] generate_and_fill(
+pub async fn[
+  B : @llm.LlmBackend,
+  G : @prover_loop.CheckGate,
+  R : @prover_loop.ProveRunner,
+] generate_and_fill(
   backend : B,
   check_gate : G,
   prove_runner : R,

@@ -1,6 +1,17 @@
-// import {
-//   "moonforge/moon_forge" @lib,
-// }
+import {
+  "moonforge/moon_forge/llm",
+  "moonforge/moon_forge/orchestrator",
+  "moonforge/moon_forge/scaffolder",
+  "moonforge/moon_forge/prover_loop",
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/stdio",
+}
+
+supported_targets = "+native"
 
 options(
   "is-main": true,

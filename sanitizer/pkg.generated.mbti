@@ -6,6 +6,12 @@ import {
 }
 
 // Values
+pub fn build_repair_instructions(String) -> String
+
+pub fn build_scaffold_repair_instructions(String) -> String
+
+pub fn split_scaffold_files(String) -> ScaffoldSanitizeResult
+
 pub fn strip_markdown(String) -> SanitizeResult
 
 // Errors
@@ -15,6 +21,16 @@ pub enum SanitizeResult {
   Clean(code~ : String)
   NeedsReview(reason~ : String)
 } derive(Eq, @debug.Debug)
+
+pub struct ScaffoldFile {
+  filename : String
+  content : String
+} derive(Eq)
+
+pub enum ScaffoldSanitizeResult {
+  ScaffoldClean(files~ : Array[ScaffoldFile])
+  ScaffoldNeedsReview(reason~ : String)
+} derive(Eq)
 
 // Type aliases
 

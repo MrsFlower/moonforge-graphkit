@@ -79,7 +79,9 @@ pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate] generate(
   }
   let domain = @bouncer.classify_domain(config.user_task)
   let base_prompt = @bouncer.build_prompt(domain, config.user_task)
-  let system_prompt = base_prompt.system_prompt + "\n\n" + scaffold_instructions(config)
+  let system_prompt = base_prompt.system_prompt +
+    "\n\n" +
+    scaffold_instructions(config)
   loop_rounds(backend, check_gate, config, system_prompt, 1)
 }
 
@@ -105,8 +107,7 @@ fn scaffold_instructions(config : ScaffoldConfig) -> String {
     #|Return your answer as EXACTLY TWO fenced code blocks, each tagged
     #|with its filename after a colon:
     #|
-  let fence_example =
-    "```mbt:\{config.pkg_name}.mbt\n... MoonBit code here ...\n```\n\n" +
+  let fence_example = "```mbt:\{config.pkg_name}.mbt\n... MoonBit code here ...\n```\n\n" +
     "```mbtp:\{config.pkg_name}.mbtp\n... predicate definitions here ...\n```\n"
   let outro =
     #|
@@ -142,7 +143,11 @@ async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate] loop_rounds(
       } else {
         let repair = @sanitizer.build_scaffold_repair_instructions(reason)
         loop_rounds(
-          backend, check_gate, config, system_prompt + "\n\n" + repair, round + 1,
+          backend,
+          check_gate,
+          config,
+          system_prompt + "\n\n" + repair,
+          round + 1,
         )
       }
     ScaffoldClean(files~) => {
@@ -162,7 +167,11 @@ async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate] loop_rounds(
             #|side-effect-free MoonBit code: no `moonbitlang/async`, no
             #|`println`, no filesystem or process access.
           loop_rounds(
-            backend, check_gate, config, system_prompt + "\n\n" + repair, round + 1,
+            backend,
+            check_gate,
+            config,
+            system_prompt + "\n\n" + repair,
+            round + 1,
           )
         }
       } else {
@@ -180,9 +189,14 @@ async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate] loop_rounds(
             RoundsExhausted(last_kind=kind, raw_output=gate.raw_output)
           } else {
             let gate_outcome = @prover_loop.ProveOutcome::new(
-              1, gate.raw_output, "", None,
+              1,
+              gate.raw_output,
+              "",
+              None,
             )
-            let repair = @prover_loop.build_repair_instructions(kind, gate_outcome)
+            let repair = @prover_loop.build_repair_instructions(
+              kind, gate_outcome,
+            )
             loop_rounds(
               backend,
               check_gate,
@@ -212,11 +226,15 @@ async fn write_package(
     _ => () // already exists is fine; a real failure surfaces on the writes below
   }
   @fs.write_file(
-    package_dir + "/moon.pkg", fixed_moon_pkg_contents(), create_mode=CreateOrTruncate,
+    package_dir + "/moon.pkg",
+    fixed_moon_pkg_contents(),
+    create_mode=CreateOrTruncate,
   )
   for f in files {
     @fs.write_file(
-      package_dir + "/" + f.filename, f.content, create_mode=CreateOrTruncate,
+      package_dir + "/" + f.filename,
+      f.content,
+      create_mode=CreateOrTruncate,
     )
   }
 }

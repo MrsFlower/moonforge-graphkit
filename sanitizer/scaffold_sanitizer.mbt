@@ -34,7 +34,9 @@ pub enum ScaffoldSanitizeResult {
 pub fn split_scaffold_files(raw : String) -> ScaffoldSanitizeResult {
   let fences = find_scaffold_fences(raw)
   if fences.length() == 0 {
-    return ScaffoldNeedsReview(reason="no fenced code blocks found in the response")
+    return ScaffoldNeedsReview(
+      reason="no fenced code blocks found in the response",
+    )
   }
   let unlabeled = fences.iter().filter(f => f.filename is None).count()
   if unlabeled > 0 {
@@ -51,8 +53,14 @@ pub fn split_scaffold_files(raw : String) -> ScaffoldSanitizeResult {
     filename: f.filename.unwrap(),
     content: f.content,
   })
-  let mbt_count = files.iter().filter(f => f.filename.has_suffix(".mbt")).count()
-  let mbtp_count = files.iter().filter(f => f.filename.has_suffix(".mbtp")).count()
+  let mbt_count = files
+    .iter()
+    .filter(f => f.filename.has_suffix(".mbt"))
+    .count()
+  let mbtp_count = files
+    .iter()
+    .filter(f => f.filename.has_suffix(".mbtp"))
+    .count()
   if mbt_count != 1 || mbtp_count != 1 {
     return ScaffoldNeedsReview(
       reason="expected exactly one .mbt file and one .mbtp file, found \{mbt_count} .mbt and \{mbtp_count} .mbtp",
@@ -63,7 +71,9 @@ pub fn split_scaffold_files(raw : String) -> ScaffoldSanitizeResult {
     distinct_names[f.filename] = true
   }
   if distinct_names.length() != files.length() {
-    return ScaffoldNeedsReview(reason="duplicate filenames across fenced blocks")
+    return ScaffoldNeedsReview(
+      reason="duplicate filenames across fenced blocks",
+    )
   }
   ScaffoldClean(files~)
 }
@@ -98,9 +108,10 @@ fn find_scaffold_fences(text : String) -> Array[RawFence] {
         let close_at = content_start + close_offset
         let content = text[content_start:close_at].to_owned()
         let filename = parse_fence_filename(info_string)
-        fences.push(
-          RawFence::{ filename, content: trim_scaffold_content(content) },
-        )
+        fences.push(RawFence::{
+          filename,
+          content: trim_scaffold_content(content),
+        })
         search_from = close_at + 3
       }
       None =>

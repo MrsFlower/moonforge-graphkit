@@ -55,7 +55,9 @@ impl @prover_loop.CheckGate for AlwaysFailsGate with fn run_check(
   _package_path,
 ) {
   @prover_loop.CheckGateResult::new(
-    false, Some(@prover_loop.SyntaxError), "simulated syntax error",
+    false,
+    Some(@prover_loop.SyntaxError),
+    "simulated syntax error",
   )
 }
 
@@ -138,7 +140,9 @@ async test "generate retries a NeedsReview response and succeeds on the next rou
   match result {
     ScaffoldSuccess(_) => ()
     NeedsHumanReview(reason~) =>
-      fail("expected ScaffoldSuccess after retry, got NeedsHumanReview: " + reason)
+      fail(
+        "expected ScaffoldSuccess after retry, got NeedsHumanReview: " + reason,
+      )
     RoundsExhausted(_) =>
       fail("expected ScaffoldSuccess after retry, got RoundsExhausted")
   }
@@ -168,7 +172,10 @@ async test "generate rejects generated code that fails the purity gate" {
 ///|
 async test "generate exhausts rounds when the check gate always fails" {
   let module_root = scratch_module_root()
-  let backend = ScriptedBackend::new([valid_two_file_reply(), valid_two_file_reply()])
+  let backend = ScriptedBackend::new([
+    valid_two_file_reply(),
+    valid_two_file_reply(),
+  ])
   let config : ScaffoldConfig = {
     module_root,
     package_path: "widget",

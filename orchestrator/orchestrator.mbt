@@ -64,7 +64,11 @@ pub(all) enum RunResult {
 /// This function performs the actual file write on every round via
 /// `injector` — the LLM backend itself never touches `config.target_file`
 /// (see the safety note on `ShellBackend` in the `llm` package).
-pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] run(
+pub async fn[
+  B : @llm.LlmBackend,
+  G : @prover_loop.CheckGate,
+  R : @prover_loop.ProveRunner,
+] run(
   backend : B,
   check_gate : G,
   prove_runner : R,
@@ -92,7 +96,11 @@ pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.P
 }
 
 ///|
-async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] loop_rounds(
+async fn[
+  B : @llm.LlmBackend,
+  G : @prover_loop.CheckGate,
+  R : @prover_loop.ProveRunner,
+] loop_rounds(
   backend : B,
   check_gate : G,
   prove_runner : R,
@@ -138,22 +146,21 @@ async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.Prove
       // does), so a pass here still proceeds to a real `run_prove` call
       // rather than short-circuiting success.
       let gate = check_gate.run_check(
-        config.native_module_root, config.package_path,
+        config.native_module_root,
+        config.package_path,
       )
       if gate.passed {
         run_prove_round(
-          backend,
-          check_gate,
-          prove_runner,
-          config,
-          updated_source,
-          system_prompt,
+          backend, check_gate, prove_runner, config, updated_source, system_prompt,
           round,
         )
       } else {
         let kind = gate.kind.unwrap_or(SyntaxError)
         let gate_outcome = @prover_loop.ProveOutcome::new(
-          1, gate.raw_output, "", None,
+          1,
+          gate.raw_output,
+          "",
+          None,
         )
         if round >= config.max_rounds {
           RoundsExhausted(last_kind=kind, last_outcome=gate_outcome)
@@ -182,7 +189,11 @@ async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.Prove
 /// check` gate in `loop_rounds` has passed. Split out so `loop_rounds`
 /// does not need a second, deeply-nested `if`/`else` arm for the gate
 /// check.
-async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] run_prove_round(
+async fn[
+  B : @llm.LlmBackend,
+  G : @prover_loop.CheckGate,
+  R : @prover_loop.ProveRunner,
+] run_prove_round(
   backend : B,
   check_gate : G,
   prove_runner : R,
@@ -199,7 +210,10 @@ async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.Prove
   if @prover_loop.is_success(outcome) {
     VerificationSuccess(rounds_used=round)
   } else if round >= config.max_rounds {
-    RoundsExhausted(last_kind=@prover_loop.classify(outcome), last_outcome=outcome)
+    RoundsExhausted(
+      last_kind=@prover_loop.classify(outcome),
+      last_outcome=outcome,
+    )
   } else {
     let kind = @prover_loop.classify(outcome)
     let repair_instructions = @prover_loop.build_repair_instructions(

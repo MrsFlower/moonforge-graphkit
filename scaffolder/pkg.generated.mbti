@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/scaffolder"
+
+import {
+  "moonforge/moon_forge/llm",
+  "moonforge/moon_forge/orchestrator",
+  "moonforge/moon_forge/prover_loop",
+}
+
+// Values
+pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate] generate(B, G, ScaffoldConfig) -> ScaffoldResult
+
+pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] generate_and_fill(B, G, R, ScaffoldAndFillConfig) -> ScaffoldAndFillResult
+
+// Errors
+
+// Types and methods
+pub(all) struct ScaffoldAndFillConfig {
+  scaffold : ScaffoldConfig
+  prove_module_root : String
+  fill_task : String
+  fill_max_rounds : Int
+}
+
+pub(all) enum ScaffoldAndFillResult {
+  FullSuccess(package_dir~ : String, fill_rounds_used~ : Int)
+  ScaffoldStageFailed(result~ : ScaffoldResult)
+  FillStageFailed(result~ : @orchestrator.RunResult)
+}
+
+pub(all) struct ScaffoldConfig {
+  module_root : String
+  package_path : String
+  pkg_name : String
+  user_task : String
+  invariant_tags : (String, String)?
+  max_rounds : Int
+}
+
+pub(all) enum ScaffoldResult {
+  ScaffoldSuccess(package_dir~ : String, files_written~ : Array[String])
+  NeedsHumanReview(reason~ : String)
+  RoundsExhausted(last_kind~ : @prover_loop.FailureKind, raw_output~ : String)
+}
+
+// Type aliases
+
+// Traits
+

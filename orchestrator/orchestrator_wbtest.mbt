@@ -45,7 +45,11 @@ impl @prover_loop.ProveRunner for AlwaysSucceedsRunner with fn run_prove(
     0,
     "",
     "",
-    Some(@json.parse("{\"result\":\"success\",\"summary\":{\"valid\":1,\"invalid\":0,\"timeout\":0,\"oom\":0,\"step_limit\":0,\"unknown\":0,\"failure\":0}}")),
+    Some(
+      @json.parse(
+        "{\"result\":\"success\",\"summary\":{\"valid\":1,\"invalid\":0,\"timeout\":0,\"oom\":0,\"step_limit\":0,\"unknown\":0,\"failure\":0}}",
+      ),
+    ),
   )
 }
 
@@ -97,13 +101,20 @@ async test "a NeedsReview response is retried, not treated as terminal, when rou
     max_rounds: 2,
   }
   let result = run(
-    backend, AlwaysPassesGate::{  }, AlwaysSucceedsRunner::{  }, config,
+    backend,
+    AlwaysPassesGate::{  },
+    AlwaysSucceedsRunner::{  },
+    config,
   )
   match result {
     VerificationSuccess(rounds_used~) => assert_eq(rounds_used, 2)
     NeedsHumanReview(reason~) =>
-      fail("expected VerificationSuccess after the retry, got NeedsHumanReview: " + reason)
-    RoundsExhausted(_) => fail("expected VerificationSuccess after the retry, got RoundsExhausted")
+      fail(
+        "expected VerificationSuccess after the retry, got NeedsHumanReview: " +
+        reason,
+      )
+    RoundsExhausted(_) =>
+      fail("expected VerificationSuccess after the retry, got RoundsExhausted")
   }
 }
 
@@ -113,7 +124,8 @@ async test "a NeedsReview response is retried, not treated as terminal, when rou
 /// injecting the unreviewable response).
 async test "NeedsReview exhausting all rounds still ends in NeedsHumanReview" {
   let fixture = make_tagged_fixture()
-  let target_file = @fs.tmpdir(prefix="moonforge_wbtest_exhaust_") + "/target.mbt"
+  let target_file = @fs.tmpdir(prefix="moonforge_wbtest_exhaust_") +
+    "/target.mbt"
   @fs.write_file(target_file, fixture, create_mode=CreateOrTruncate)
   let bad_reply = "```mbt\nfoo\n```\n```mbt\nbar\n```"
   let backend = ScriptedBackend::new([bad_reply, bad_reply])
@@ -129,13 +141,21 @@ async test "NeedsReview exhausting all rounds still ends in NeedsHumanReview" {
     max_rounds: 2,
   }
   let result = run(
-    backend, AlwaysPassesGate::{  }, AlwaysSucceedsRunner::{  }, config,
+    backend,
+    AlwaysPassesGate::{  },
+    AlwaysSucceedsRunner::{  },
+    config,
   )
   match result {
-    NeedsHumanReview(reason~) => assert_true(reason.contains("multiple fenced code blocks"))
+    NeedsHumanReview(reason~) =>
+      assert_true(reason.contains("multiple fenced code blocks"))
     VerificationSuccess(_) =>
-      fail("expected NeedsHumanReview after exhausting rounds, got VerificationSuccess")
+      fail(
+        "expected NeedsHumanReview after exhausting rounds, got VerificationSuccess",
+      )
     RoundsExhausted(_) =>
-      fail("expected NeedsHumanReview after exhausting rounds, got RoundsExhausted")
+      fail(
+        "expected NeedsHumanReview after exhausting rounds, got RoundsExhausted",
+      )
   }
 }

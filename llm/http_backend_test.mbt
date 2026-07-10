@@ -24,12 +24,13 @@ async test "HttpBackend.complete round-trips a trivial prompt through DeepSeek" 
 /// `.agents/skills/proxy-env/SKILL.md`) — both are opt-in via env vars so
 /// this test skips cleanly on machines without them.
 async test "HttpBackend.complete round-trips a trivial prompt through Mistral's Leanstral 1.5" {
-  guard @env.get_env_var("MISTRAL_API_KEY") is Some(api_key) else {
-    return
-  }
+  guard @env.get_env_var("MISTRAL_API_KEY") is Some(api_key) else { return }
   let proxy_url = @env.get_env_var("MOONFORGE_HTTP_PROXY")
   let backend = HttpBackend::new(
-    "https://api.mistral.ai/v1", api_key, "labs-leanstral-1-5", proxy_url?,
+    "https://api.mistral.ai/v1",
+    api_key,
+    "labs-leanstral-1-5",
+    proxy_url?,
   )
   let reply = backend.complete(
     "You are a terse test fixture.", "Reply with exactly this text and nothing else: MOONFORGE_LEANSTRAL_OK",

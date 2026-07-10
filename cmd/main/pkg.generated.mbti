@@ -6,6 +6,9 @@ package "moonforge/moon_forge/cmd/main"
 // Errors
 
 // Types and methods
+type AnyBackend
+
+type AnyProveRunner
 
 // Type aliases
 

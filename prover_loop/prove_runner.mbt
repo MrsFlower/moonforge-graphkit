@@ -77,7 +77,7 @@ pub(open) trait ProveRunner {
 /// process running MoonForge already has `moon`, Why3, and the SMT
 /// solvers on its own `PATH` — for example when MoonForge itself is
 /// running inside the same WSL2 distro the toolchain was installed into.
-pub struct LocalProveRunner {}
+pub(all) struct LocalProveRunner {}
 
 ///|
 pub impl ProveRunner for LocalProveRunner with fn run_prove(

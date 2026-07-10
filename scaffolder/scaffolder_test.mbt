@@ -52,7 +52,9 @@ async test "scaffolder generates a brand-new clamp package that moon check and m
     max_rounds: 5,
   }
   let result = @scaffolder.generate(
-    backend, @prover_loop.RealCheckGate::{  }, config,
+    backend,
+    @prover_loop.RealCheckGate::{  },
+    config,
   )
   match result {
     @scaffolder.ScaffoldSuccess(files_written~, ..) => {
@@ -65,7 +67,9 @@ async test "scaffolder generates a brand-new clamp package that moon check and m
       let prove_runner = @prover_loop.WslProveRunner::new(
         "Ubuntu-24.04", env_setup,
       )
-      let outcome = prove_runner.run_prove(wsl_module_root, package_path, "clamp")
+      let outcome = prove_runner.run_prove(
+        wsl_module_root, package_path, "clamp",
+      )
       if !@prover_loop.is_success(outcome) {
         fail(
           "generated clamp package passed moon check but failed moon prove: stdout=\{outcome.stdout} stderr=\{outcome.stderr}",
@@ -75,7 +79,9 @@ async test "scaffolder generates a brand-new clamp package that moon check and m
     @scaffolder.NeedsHumanReview(reason~) =>
       fail("expected ScaffoldSuccess, got NeedsHumanReview: " + reason)
     @scaffolder.RoundsExhausted(raw_output~, ..) =>
-      fail("expected ScaffoldSuccess, got RoundsExhausted. output: " + raw_output)
+      fail(
+        "expected ScaffoldSuccess, got RoundsExhausted. output: " + raw_output,
+      )
   }
   @fs.rmdir(package_dir, recursive=true)
 }

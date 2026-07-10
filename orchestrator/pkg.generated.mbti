@@ -7,13 +7,14 @@ import {
 }
 
 // Values
-pub async fn[B : @llm.LlmBackend, R : @prover_loop.ProveRunner] run(B, R, RunConfig) -> RunResult
+pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] run(B, G, R, RunConfig) -> RunResult
 
 // Errors
 
 // Types and methods
 pub(all) struct RunConfig {
   module_root : String
+  native_module_root : String
   package_path : String
   pkg_name : String
   target_file : String

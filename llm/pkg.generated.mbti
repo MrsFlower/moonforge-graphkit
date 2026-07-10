@@ -2,6 +2,7 @@
 package "moonforge/moon_forge/llm"
 
 // Values
+pub let leanstral_prompt_addendum : String
 
 // Errors
 
@@ -10,8 +11,10 @@ pub struct HttpBackend {
   base_url : String
   api_key : String
   model : String
+  proxy_url : String?
+  extra_system_prompt : String?
 }
-pub fn HttpBackend::new(String, String, String) -> Self
+pub fn HttpBackend::new(String, String, String, proxy_url? : String, extra_system_prompt? : String) -> Self
 pub impl LlmBackend for HttpBackend
 
 pub struct ShellBackend {

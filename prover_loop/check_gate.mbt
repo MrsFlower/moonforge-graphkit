@@ -68,11 +68,7 @@ pub fn CheckGateResult::new(
 /// against a real project directory, exactly as `AlwaysSucceedsRunner`
 /// lets them skip a real `moon prove`/WSL2 round trip.
 pub(open) trait CheckGate {
-  async fn run_check(
-    Self,
-    module_root : String,
-    package_path : String,
-  ) -> CheckGateResult
+  async fn run_check(Self, module_root : String, package_path : String) -> CheckGateResult
 }
 
 ///|
@@ -120,6 +116,10 @@ pub async fn run_check_gate(
     // text-based here, reusing the same substrings `diagnosis` already
     // trusts for `moon prove` syntax failures, since `moon check` failures
     // are drawn from the same MoonBit/`.mbtp` frontend errors.
-    { passed: false, kind: Some(classify_from_text(combined)), raw_output: combined }
+    {
+      passed: false,
+      kind: Some(classify_from_text(combined)),
+      raw_output: combined,
+    }
   }
 }

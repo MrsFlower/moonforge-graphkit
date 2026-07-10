@@ -56,7 +56,10 @@ async test "MoonForge end-to-end: fills in isqrt's missing invariant and reaches
     max_rounds: 5,
   }
   let result = @orchestrator.run(
-    backend, @prover_loop.RealCheckGate::{  }, prove_runner, config,
+    backend,
+    @prover_loop.RealCheckGate::{  },
+    prove_runner,
+    config,
   )
   // Always restore the fixture file, whether the run succeeded or not, so
   // repeated test runs start from the same known-missing-invariant state
@@ -158,7 +161,10 @@ async test "MoonForge end-to-end: fills in batch_auction's missing two-array inv
     max_rounds: 6,
   }
   let result = @orchestrator.run(
-    backend, @prover_loop.RealCheckGate::{  }, prove_runner, config,
+    backend,
+    @prover_loop.RealCheckGate::{  },
+    prove_runner,
+    config,
   )
   @fs.write_file(target_file, original_source)
   match result {
@@ -259,12 +265,17 @@ async test "MoonForge evaluation: Leanstral 1.5 filling in batch_auction's missi
     max_rounds: 6,
   }
   let result = @orchestrator.run(
-    backend, @prover_loop.RealCheckGate::{  }, prove_runner, config,
+    backend,
+    @prover_loop.RealCheckGate::{  },
+    prove_runner,
+    config,
   )
   @fs.write_file(target_file, original_source)
   match result {
     @orchestrator.VerificationSuccess(rounds_used~) =>
-      println("Leanstral 1.5 (batch_auction): VerificationSuccess in \{rounds_used} round(s)")
+      println(
+        "Leanstral 1.5 (batch_auction): VerificationSuccess in \{rounds_used} round(s)",
+      )
     @orchestrator.NeedsHumanReview(reason~) =>
       println("Leanstral 1.5 (batch_auction): NeedsHumanReview - \{reason}")
     @orchestrator.RoundsExhausted(last_kind~, last_outcome~) =>
@@ -337,7 +348,10 @@ async test "MoonForge evaluation: Leanstral 1.5 filling in isqrt's missing invar
     max_rounds: 6,
   }
   let result = @orchestrator.run(
-    backend, @prover_loop.RealCheckGate::{  }, prove_runner, config,
+    backend,
+    @prover_loop.RealCheckGate::{  },
+    prove_runner,
+    config,
   )
   @fs.write_file(target_file, original_source)
   match result {
