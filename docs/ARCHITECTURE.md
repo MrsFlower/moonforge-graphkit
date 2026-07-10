@@ -73,6 +73,14 @@ pub(open) trait LlmBackend {
 
 切后端就是换构造参数，运行时可切换，不是编译时二选一。
 
+**`ShellBackend` 依赖的 codex provider 可用性不受本项目控制**：codex 走的
+provider 配置在 `~/.codex/config.toml`，跟 moon-forge 自身代码无关。真实
+遇到过这个 provider 连不上（`Reconnecting...` 反复重试直到超时）的情况，
+排查和解法都是代理节点层面的事，详见 `docs/LESSONS.md` "ShellBackend 连不上
+时先怀疑 provider"一节。遇到 `ShellBackend` 长时间无响应时，`HttpBackend`
+配 DeepSeek 或 Leanstral 1.5 是可用的备选路径（`cmd/main` 的 `--backend
+http` 系列 flag），不需要等 codex 恢复。
+
 ## bouncer：安全闸门 + 领域先验规则
 
 `bouncer` 在每次 `orchestrator.run` 一开始就跑，分两步：
