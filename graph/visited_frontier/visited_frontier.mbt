@@ -270,6 +270,12 @@ pub(all) struct BfsQueue {
 }
 
 ///|
+pub(all) struct BfsDequeue {
+  vertex : Int
+  queue : BfsQueue
+}
+
+///|
 pub(all) struct BfsInit {
   seed : BfsSeed
   queue : BfsQueue
@@ -370,5 +376,35 @@ pub fn enqueue_one(
   proof_assert result.queue[state.tail] == vertex
   proof_assert queue_bounds(vertices, result)
   proof_assert enqueue_post(vertices, state, vertex, result)
+  result
+}
+
+///|
+pub fn dequeue_one(
+  vertices : Int,
+  state : BfsQueue,
+) -> BfsDequeue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: state.head < state.tail,
+  proof_ensure: result => dequeue_post(vertices, state, result),
+} {
+  let vertex = state.queue[state.head]
+  let queue_buffer = state.queue
+  let head = state.head + 1
+  let tail = state.tail
+  proof_assert head <= tail
+  let next_queue = { queue: queue_buffer, head, tail }
+  proof_assert queue_shape(vertices, next_queue.queue)
+  proof_assert next_queue.head == state.head + 1
+  proof_assert next_queue.tail == state.tail
+  proof_assert queue_bounds(vertices, next_queue)
+  let queue = next_queue
+  let result = { vertex, queue }
+  proof_assert result.vertex == state.queue[state.head]
+  proof_assert result.queue.head == state.head + 1
+  proof_assert result.queue.tail == state.tail
+  proof_assert queue_bounds(vertices, result.queue)
+  proof_assert dequeue_post(vertices, state, result)
   result
 }

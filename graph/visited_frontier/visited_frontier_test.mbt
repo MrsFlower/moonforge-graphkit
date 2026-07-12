@@ -113,3 +113,17 @@ test "enqueue one" {
   assert_eq(queue2.queue[0], 2)
   assert_eq(queue2.queue[1], 3)
 }
+
+///|
+test "dequeue one" {
+  let queue = @visited_frontier.seed_start_queue(4, 2)
+  let queue2 = @visited_frontier.enqueue_one(4, queue, 3)
+  let first = @visited_frontier.dequeue_one(4, queue2)
+  assert_eq(first.vertex, 2)
+  assert_eq(first.queue.head, 1)
+  assert_eq(first.queue.tail, 2)
+  let second = @visited_frontier.dequeue_one(4, first.queue)
+  assert_eq(second.vertex, 3)
+  assert_eq(second.queue.head, 2)
+  assert_eq(second.queue.tail, 2)
+}

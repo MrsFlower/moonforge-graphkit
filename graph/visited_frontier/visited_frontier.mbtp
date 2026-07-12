@@ -230,6 +230,20 @@ predicate enqueue_post(
 }
 
 ///|
+predicate dequeue_post(
+  vertices : Int,
+  before : BfsQueue,
+  result : BfsDequeue
+) {
+  queue_bounds(vertices, before) &&
+  before.head < before.tail &&
+  queue_bounds(vertices, result.queue) &&
+  result.vertex == before.queue[before.head] &&
+  result.queue.head == before.head + 1 &&
+  result.queue.tail == before.tail
+}
+
+///|
 predicate bfs_init_post(
   vertices : Int,
   edges : FixedArray[Int],
