@@ -133,6 +133,71 @@ pub fn discover_first_unmarked_out_edge_prefix(
 }
 
 ///|
+pub fn discover_first_unmarked_out_edge_prefix_preserve_marked(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  upto : Int,
+  keep : Int,
+) -> Int where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, source),
+  proof_require: valid_vertex(vertices, keep),
+  proof_require: marked_vertex(vertices, visited, keep),
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: result => {
+    discover_prefix_post(vertices, edges, visited, source, upto, result)
+  },
+  proof_ensure: _result => marked_vertex(vertices, visited, keep),
+} {
+  let result = for candidate = 0; candidate < upto; {
+    if is_edge(vertices, edges, source, candidate) &&
+      !is_marked(vertices, visited, candidate) {
+      mark_vertex_preserve_marked(vertices, visited, candidate, keep)
+      proof_assert has_edge(vertices, edges, source, candidate)
+      proof_assert marked_vertex(vertices, visited, candidate)
+      proof_assert marked_vertex(vertices, visited, keep)
+      break candidate
+    } else {
+      proof_assert !unmarked_out_edge(
+        vertices, edges, visited, source, candidate,
+      )
+      proof_assert marked_vertex(vertices, visited, keep)
+      proof_assert no_unmarked_out_edge_prefix(
+        vertices,
+        edges,
+        visited,
+        source,
+        candidate + 1,
+      )
+      continue candidate + 1
+    }
+  } nobreak {
+    vertices
+  } where {
+    proof_invariant: 0 <= candidate,
+    proof_invariant: candidate <= upto,
+    proof_invariant: marked_vertex(vertices, visited, keep),
+    proof_invariant: no_unmarked_out_edge_prefix(
+      vertices, edges, visited, source, candidate,
+    ),
+    proof_yield: result => {
+      discover_prefix_post(vertices, edges, visited, source, upto, result) &&
+      marked_vertex(vertices, visited, keep)
+    },
+  }
+  proof_assert discover_prefix_post(
+    vertices, edges, visited, source, upto, result,
+  )
+  proof_assert marked_vertex(vertices, visited, keep)
+  result
+}
+
+///|
 pub fn mark_out_neighbors_prefix(
   vertices : Int,
   edges : FixedArray[Int],
