@@ -95,6 +95,9 @@ test "build_prompt injects graph prior rules for the Graph domain" {
   let prompt = @bouncer.build_prompt(Graph, "verify this pathfinder")
   assert_true(prompt.system_prompt.contains("graph / pathfinding algorithms"))
   assert_true(prompt.system_prompt.contains("disjoint"))
+  assert_true(prompt.system_prompt.contains("length1"))
+  assert_true(prompt.system_prompt.contains("one edge relaxation"))
+  assert_true(prompt.system_prompt.contains("defensive"))
 }
 
 ///|

@@ -82,7 +82,36 @@ fn unproved_repair_instructions(
     #|
     #|Raw prove output from the failed attempt:
     #|
-  summary_line + "\n\n" + counterexample_note + "\n\n" + fixes + outcome.stdout
+  summary_line +
+  "\n\n" +
+  counterexample_note +
+  "\n\n" +
+  lowering_repair_note(outcome) +
+  fixes +
+  outcome.stdout +
+  outcome.stderr
+}
+
+///|
+fn lowering_repair_note(outcome : ProveOutcome) -> String {
+  let combined = outcome.stdout + "\n" + outcome.stderr
+  if combined.contains("length1") ||
+    combined.contains("termination of this expression cannot be proved") {
+    let note =
+      #|This failure mentions `length1` or a loop termination/lowering warning.
+      #|For MoonBit proof code in this project, that is often a frontend/lowering
+      #|shape problem around mutable arrays or worklists, not a missing global
+      #|invariant. Before adding more invariants, try reshaping the loop to one
+      #|upward counter (`i < n`, `continue i + 1`). If that exposes many array
+      #|write preservation goals, isolate one update or one edge relaxation in a
+      #|small helper and compose those helpers. Use `proof_axiomatized` only as a
+      #|temporary narrow bridge with concrete preconditions and a named
+      #|postcondition; do not trust the whole loop.
+      #|
+    note
+  } else {
+    ""
+  }
 }
 
 ///|

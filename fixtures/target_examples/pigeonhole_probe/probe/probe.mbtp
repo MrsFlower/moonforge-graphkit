@@ -1,0 +1,186 @@
+///|
+/// Probe: can a plain (non-`lemma`) contracted function recurse on a
+/// decreasing `Int` (not a structural algebraic type) while building a
+/// `Fset[Int]`, using `proof_decrease` the same way `chain_measure`-style
+/// lemmas do elsewhere in this project? This has no precedent in the
+/// `verified` repo (every existing `proof_decrease` use recurses on an
+/// algebraic data type — `Tree`, `Heap`, `MinStack` — never a raw `Int`
+/// length), so this is tested in isolation before touching the real
+/// `astar_grid` fixture.
+///
+/// A real, previously-undocumented restriction found by this probe: a
+/// plain (non-`lemma`) logic `fn`'s `where` clause only accepts
+/// `proof_decrease`/`proof_reasoning` — `proof_require`/`proof_ensure` are
+/// rejected there (real error 4195: "Logic definitions only support
+/// 'proof_decrease' and 'proof_reasoning'"), unlike a *contracted*
+/// function (one called from ordinary code, like `row_of` in
+/// `astar_grid.mbt`), which does accept `proof_require`/`proof_ensure`.
+/// Because there is no `proof_require` to restrict `len`, the array
+/// access `scratch[len - 1]` must be unconditionally safe for *every*
+/// `Int len`, not just the `0 <= len <= scratch.length()` range every
+/// real caller below actually uses — hence the explicit
+/// `len > scratch.length()` guard, which the lemmas' own
+/// `proof_require: len <= scratch.length()` premise means is dead code on
+/// every path a caller can actually reach, but is required for the
+/// solver to accept the recursive index access as unconditionally safe.
+fn scratch_set(scratch : FixedArray[Int], len : Int) -> Fset[Int] where {
+  proof_decrease: len,
+} {
+  if len <= 0 {
+    Fset::empty()
+  } else {
+    if len > scratch.length() {
+      Fset::empty()
+    } else {
+      scratch_set(scratch, len - 1).add(scratch[len - 1])
+    }
+  }
+}
+
+///|
+/// Every prefix entry differs from `x`. Packaged as a named predicate
+/// (rather than a raw `∀` inline in a lemma's `where` clause) so no
+/// `proof_*` line ever sits directly after a `∀`-led line — a real
+/// `moonc prove` `.mbtp` parser bug this project's `LESSONS.md` already
+/// documented once (there misdiagnosed as "two adjacent `∀` lines"; this
+/// probe confirms the actual trigger is any `proof_*` line immediately
+/// following a `∀` line, including a single one).
+predicate prefix_all_differ(scratch : FixedArray[Int], len : Int, x : Int) {
+  ∀ k : Int, (0 <= k && k < len) → scratch[k] != x
+}
+
+///|
+/// Why3's `set.Fset` theory only states `is_empty_empty` as the
+/// universally-quantified `is_empty (empty : fset 'a)` axiom, not directly
+/// as `mem x empty = False` for a specific `x` — the solver needs this
+/// instantiated once per call site. This local copy exists because
+/// cross-package `lemma` calls from inside a contracted function body are
+/// rejected (real error 4207: "only contracted functions, imported
+/// proof-callable functions, pure functions, and primitive operators can
+/// be called in contracted function bodies") — see `fset.mbtp`'s doc
+/// comment for the full explanation of why the shared version had to be
+/// dropped from that package instead.
+lemma local_fset_empty_mem_false(x : Int) where {
+  proof_ensure: Fset::empty().mem(x) == false,
+} {
+
+}
+
+///|
+/// Same instantiation gap as `local_fset_empty_mem_false`, for
+/// `cardinal_empty` (`is_empty s <-> cardinal s = 0`) instead of
+/// membership. A real, previously-undocumented `moonc prove` restriction
+/// found by this probe: `Fset::empty().cardinal() == 0` alone crashes the
+/// compiler with an internal error (`Moonc.Hashed_type.
+/// Unresolved_type_variable`) even with an unused `Int` parameter in
+/// scope, because `.cardinal()` returns a plain `Int` and so never gives
+/// the type-checker anywhere to resolve `Fset::empty()`'s type parameter
+/// `T` — unlike `.mem(x)` above, whose argument `x : T` pins `T` down
+/// directly. Routing through `.add(unused).remove(unused)` (a no-op on
+/// cardinality, confirmed by the `set.Fset` theory's own `cardinal_add`/
+/// `cardinal_remove` axioms) gives the type-checker that pin without
+/// changing what is actually being proved.
+lemma local_fset_empty_cardinal_zero(unused : Int) where {
+  proof_ensure: Fset::empty().add(unused).remove(unused).cardinal() == 0,
+} {
+
+}
+
+///|
+/// Probe 2: the companion "not yet a member" induction, mirroring
+/// `bitmap32.mbtp`'s `prefix_domain_step_absent` shape but recursing on the
+/// prefix bound `len` instead of walking a fixed bitmap.
+lemma scratch_set_not_mem(scratch : FixedArray[Int], len : Int, x : Int) where {
+  proof_require: 0 <= len,
+  proof_require: len <= scratch.length(),
+  proof_require: prefix_all_differ(scratch, len, x),
+  proof_decrease: len,
+  proof_ensure: scratch_set(scratch, len).mem(x) == false,
+} {
+  if len == 0 {
+    local_fset_empty_mem_false(x)
+    proof_assert scratch_set(scratch, len).mem(x) == false
+  } else {
+    proof_assert scratch[len - 1] != x
+    scratch_set_not_mem(scratch, len - 1, x)
+  }
+}
+
+///|
+/// Every pair of distinct prefix indices names a distinct `scratch` value.
+predicate prefix_all_distinct(scratch : FixedArray[Int], len : Int) {
+  ∀ i : Int, ∀ j : Int,
+    (0 <= i && i < len && 0 <= j && j < len && i != j) →
+      scratch[i] != scratch[j]
+}
+
+///|
+/// Probe 3: the cardinality induction — this is the actual "pigeonhole"
+/// engine `chain_has_room` needs. If every prefix entry is pairwise
+/// distinct (expressed here as a hypothesis, not yet derived from a real
+/// cost chain), `scratch_set`'s cardinal tracks `len` exactly via the
+/// `set.Fset` theory's `cardinal_add` axiom (the "absent" branch).
+lemma scratch_set_cardinal_eq_len(scratch : FixedArray[Int], len : Int) where {
+  proof_require: 0 <= len,
+  proof_require: len <= scratch.length(),
+  proof_require: prefix_all_distinct(scratch, len),
+  proof_decrease: len,
+  proof_ensure: scratch_set(scratch, len).cardinal() == len,
+} {
+  if len == 0 {
+    local_fset_empty_cardinal_zero(0)
+    proof_assert scratch_set(scratch, len).cardinal() == 0
+  } else {
+    scratch_set_cardinal_eq_len(scratch, len - 1)
+    scratch_set_not_mem(scratch, len - 1, scratch[len - 1])
+    proof_assert scratch_set(scratch, len - 1).mem(scratch[len - 1]) == false
+  }
+}
+
+///|
+/// Every prefix entry is a valid index below `bound`.
+predicate prefix_all_bounded(scratch : FixedArray[Int], len : Int, bound : Int) {
+  ∀ j : Int, (0 <= j && j < len) → (0 <= scratch[j] && scratch[j] < bound)
+}
+
+///|
+/// Probe 4: the subset-of-universe half needed for the final pigeonhole
+/// bound, using `set.Fset`'s `cardinal_subset` axiom (subset implies
+/// `cardinal <=`) plus `FsetInt`'s `cardinal_interval` (`cardinal
+/// (interval l r) == r - l`), both confirmed present in this toolchain's
+/// Why3 stdlib (`stdlib/set.mlw`).
+lemma scratch_set_subset_universe(
+  scratch : FixedArray[Int],
+  len : Int,
+  bound : Int,
+) where {
+  proof_require: 0 <= len,
+  proof_require: len <= scratch.length(),
+  proof_require: prefix_all_bounded(scratch, len, bound),
+  proof_decrease: len,
+  proof_ensure: scratch_set(scratch, len).subset(@fset.fset_interval(0, bound)),
+} {
+  if len == 0 {
+
+  } else {
+    scratch_set_subset_universe(scratch, len - 1, bound)
+  }
+}
+
+///|
+/// Probe capstone: the actual pigeonhole bound `chain_has_room` needs —
+/// `len` pairwise-distinct values in `[0, bound)` forces `len <= bound`.
+lemma pigeonhole_bound(scratch : FixedArray[Int], len : Int, bound : Int) where {
+  proof_require: 0 <= len,
+  proof_require: len <= scratch.length(),
+  proof_require: 0 <= bound,
+  proof_require: prefix_all_bounded(scratch, len, bound),
+  proof_require: prefix_all_distinct(scratch, len),
+  proof_ensure: len <= bound,
+} {
+  scratch_set_cardinal_eq_len(scratch, len)
+  scratch_set_subset_universe(scratch, len, bound)
+  proof_assert scratch_set(scratch, len).cardinal() <= @fset.fset_interval(0, bound).cardinal()
+  proof_assert @fset.fset_interval(0, bound).cardinal() == bound
+  proof_assert len <= bound
+}

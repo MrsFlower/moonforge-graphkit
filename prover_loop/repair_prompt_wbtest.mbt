@@ -37,6 +37,21 @@ test "build_repair_instructions for Unproved with a counterexample points at fal
 }
 
 ///|
+test "build_repair_instructions recognizes length1 loop-lowering failures" {
+  let outcome : ProveOutcome = {
+    exit_code: 1,
+    stdout: "search'vc : not settled.length1 = make_checked o False.length1",
+    stderr: "",
+    proof_json: None,
+  }
+  let kind = Unproved(has_invalid=false, timeout_goals=1, unknown_goals=0)
+  let instructions = build_repair_instructions(kind, outcome)
+  assert_true(instructions.contains("frontend/lowering"))
+  assert_true(instructions.contains("upward counter"))
+  assert_true(instructions.contains("one edge relaxation"))
+}
+
+///|
 test "build_repair_instructions for ProverCrashed recommends simplifying, not adding contracts" {
   let outcome : ProveOutcome = {
     exit_code: 1,

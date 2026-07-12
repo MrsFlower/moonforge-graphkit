@@ -1,0 +1,7 @@
+import {
+  "moonforge/pigeonhole_probe/libs/fset",
+}
+
+options(
+  "proof-enabled": true,
+)

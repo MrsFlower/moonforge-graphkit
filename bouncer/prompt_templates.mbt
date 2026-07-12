@@ -204,6 +204,29 @@ let graph_prior_rules : String =
   #|  theorem across the whole search; this project's own examples show the
   #|  fully general version of such proofs is more likely to time out than
   #|  the step-local version.
+  #|- For mutable worklists or visited arrays, prefer a single upward loop
+  #|  counter (`step < max_cells`, `continue step + 1`) over countdown or
+  #|  multi-counter loop states. The A* case study found that a Bool
+  #|  worklist loop with countdown-style state can produce `length1` /
+  #|  loop-lowering timeouts that are not fixed by adding more invariants.
+  #|- If a single upward loop removes a lowering timeout but exposes many
+  #|  preservation goals around array writes, isolate the mutation behind a
+  #|  small helper for one update or one edge relaxation, then compose those
+  #|  helpers. Do not trust the whole search loop; if a temporary bridge is
+  #|  unavoidable, keep it at one-edge or one-index granularity with concrete
+  #|  preconditions and a named postcondition.
+  #|- If a helper predicate or lemma precondition is missing at one call site,
+  #|  first try a local `proof_assert` or a smaller call-site fact instead of
+  #|  promoting the whole predicate into the enclosing loop invariant. The
+  #|  A* work repeatedly showed that changing a loop invariant list can make
+  #|  unrelated SMT goals worse, even when the added or removed fact is
+  #|  logically reasonable.
+  #|- If the algorithm reconstructs a path by walking a `came_from` or
+  #|  predecessor array backward into a fixed buffer, prefer a defensive
+  #|  guard that returns failure when the buffer would fill before reaching
+  #|  the start. Only prove a pigeonhole/cardinality chain when the contract
+  #|  truly requires total reconstruction without such a failure case; if so,
+  #|  split it into small named lemmas instead of one broad assertion.
 
 ///|
 /// Domain-neutral fallback used when `classify_domain` returns

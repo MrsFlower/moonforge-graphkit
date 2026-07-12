@@ -1,0 +1,254 @@
+///|
+/// Cells are addressed with flat row-major indices `r * width + c` into a
+/// single `FixedArray[Int]`, not a nested `FixedArray[FixedArray[Int]]`.
+/// This is not a style choice — it was forced by a real, structural
+/// toolchain limitation: a genuinely nested `FixedArray[FixedArray[Int]]`
+/// fails `moon prove` outright ("This application instantiates pure type
+/// variable 'a with a mutable type array int"), because `FixedArray`
+/// lowers to a Why3 mutable `array`, and that lowering does not support
+/// nesting one mutable array inside another. A real probe confirmed the
+/// flat-index alternative — including the multiplication in `r * width +
+/// c` appearing inside a `∀ r, ∀ c, ...` quantifier body — proves in
+/// seconds with no timeout, so the "multiplication inside a quantifier is
+/// a nonlinear-arithmetic risk" concern this project's own research notes
+/// raise does not actually block this case (see
+/// `moon-forge/docs/LESSONS.md`).
+predicate valid_dims(width : Int, height : Int) {
+  0 < width && width <= 100 && 0 < height && height <= 100
+}
+
+///|
+predicate in_bounds(width : Int, height : Int, r : Int, c : Int) {
+  0 <= r && r < height && 0 <= c && c < width
+}
+
+///|
+predicate valid_grid(width : Int, height : Int, weights : FixedArray[Int]) {
+  valid_dims(width, height) && weights.length() == width * height
+}
+
+///|
+/// `weights[r * width + c] == 0` marks an obstacle; every passable cell
+/// carries a strictly positive integer weight, matching the challenge
+/// text verbatim ("可通过的节点（正整数权重）和不可通过的障碍物").
+predicate is_obstacle(width : Int, weights : FixedArray[Int], r : Int, c : Int) {
+  weights[r * width + c] == 0
+}
+
+///|
+predicate valid_weights(width : Int, height : Int, weights : FixedArray[Int]) {
+  ∀ r : Int, ∀ c : Int,
+    in_bounds(width, height, r, c) → 0 <= weights[r * width + c]
+}
+
+///|
+predicate same_shape(width : Int, height : Int, a : FixedArray[Int]) {
+  a.length() == width * height
+}
+
+///|
+/// Every `cost` entry is either the "never discovered" sentinel `-1` or a
+/// genuine non-negative tentative cost — `search`'s only two write sites
+/// for `cost` are its own initialization (`FixedArray::make(..., -1)`)
+/// and `relax_edge`, whose `candidate = cost[from] + weights[target]`
+/// preserves this by construction (`cost[from] >= 0` from this same
+/// invariant, `weights[target] >= 0` from `valid_weights`). Needed as an
+/// explicit `search_post` conjunct — not just implied "by construction"
+/// — because `build_path_core`'s `if cost[target] == -1 { -1 } else {
+/// ... }` guard only gives `cost[target] != -1`, and connecting that to
+/// `discovered(width, cost, ...)`'s `0 <= cost[...]` needs this fact
+/// stated explicitly; without it the solver has no way to rule out
+/// `cost[target]` being some other negative value. See
+/// `moon-forge/docs/LESSONS.md`.
+predicate cost_sentinel_or_nonneg(width : Int, height : Int, cost : FixedArray[Int]) {
+  ∀ j : Int, 0 <= j && j < width * height → cost[j] == -1 || 0 <= cost[j]
+}
+
+///|
+/// Every discovered cell other than `start` has a real `came_from`
+/// predecessor — `start`'s cost is the only one ever set directly
+/// (`cost[start] = 0` before the loop even starts); every other
+/// discovered cell only ever becomes discovered by `relax_edge`, which
+/// always writes `came_from[target]` in the same branch that writes
+/// `cost[target]`. Needed as an explicit `search_post` conjunct because
+/// `build_path_core`'s WALK loop, on hitting `came_from[current] == -1`,
+/// needs to conclude `current == start` (its only other invariant
+/// disjunct) — without this fact `came_from[current] == -1` alone does
+/// not rule out `current` being some other, unreachable-from-`relax_
+/// edge`, discovered cell. See `moon-forge/docs/LESSONS.md`.
+predicate came_from_neg_one_implies_start(
+  width : Int,
+  height : Int,
+  cost : FixedArray[Int],
+  came_from : FixedArray[Int],
+  start : Int,
+) {
+  ∀ j : Int,
+    0 <= j && j < width * height && 0 <= cost[j] && came_from[j] == -1 →
+      j == start
+}
+
+///|
+/// A cell has been discovered (assigned a finite tentative cost) exactly
+/// when `cost[r * width + c] >= 0`; `-1` is the "never reached" sentinel.
+/// This doubles as the "open" predicate once paired with
+/// `!closed[r * width + c]` — kept as one array rather than a separate
+/// `open : FixedArray[Bool]`, so there is nothing extra to keep in sync.
+predicate discovered(width : Int, cost : FixedArray[Int], r : Int, c : Int) {
+  0 <= cost[r * width + c]
+}
+
+///|
+/// Once a cell is closed it must already have been discovered — closing
+/// never happens "for free". This plus `closed`'s monotonic growth (only
+/// ever set to `true`, never back to `false`) is what makes the step
+/// counter a sound proxy for "cells closed so far" in the termination
+/// argument.
+pub predicate closed_implies_discovered(
+  width : Int,
+  height : Int,
+  closed : FixedArray[Bool],
+  cost : FixedArray[Int],
+) {
+  ∀ r : Int, ∀ c : Int,
+    (in_bounds(width, height, r, c) && closed[r * width + c]) →
+      discovered(width, cost, r, c)
+}
+
+///|
+/// The core Dijkstra/A* (with a zero heuristic — see the doc comment on
+/// `search` in `astar_grid.mbt`) selection invariant: every closed cell's
+/// final cost is already less than or equal to every open (discovered,
+/// not yet closed) cell's tentative cost. This is what lets the main loop
+/// always pick a globally-safe node to close next without ever having to
+/// revisit an earlier decision.
+pub predicate closed_cost_le_open_cost(
+  width : Int,
+  height : Int,
+  closed : FixedArray[Bool],
+  cost : FixedArray[Int],
+) {
+  ∀ r1 : Int, ∀ c1 : Int, ∀ r2 : Int, ∀ c2 : Int,
+    (in_bounds(width, height, r1, c1) && closed[r1 * width + c1] &&
+      in_bounds(width, height, r2, c2) && !closed[r2 * width + c2] &&
+      discovered(width, cost, r2, c2)) →
+      cost[r1 * width + c1] <= cost[r2 * width + c2]
+}
+
+///|
+/// Safety property required by the challenge: no cell that was ever
+/// discovered (and therefore ever eligible to be closed, be a
+/// predecessor, or appear in a reconstructed path) is an obstacle. The
+/// start cell is required passable by `search`'s precondition, and every
+/// other discovered cell only ever gets discovered by relaxing an edge
+/// out of an already-closed, already-passable cell into a neighbor that
+/// itself passed the obstacle check first.
+predicate discovered_avoids_obstacles(
+  width : Int,
+  height : Int,
+  weights : FixedArray[Int],
+  cost : FixedArray[Int],
+) {
+  ∀ r : Int, ∀ c : Int,
+    in_bounds(width, height, r, c) && discovered(width, cost, r, c) →
+      !is_obstacle(width, weights, r, c)
+}
+
+///|
+/// `came_from[r * width + c]` records the flat index of the closed
+/// predecessor cell that most recently improved `cost[r * width + c]`, or
+/// `-1` if `(r, c)` has never been discovered. Every recorded predecessor
+/// must itself be a valid, closed, in-bounds cell — this is what lets
+/// path reconstruction in `build_path_core` walk backwards without ever
+/// stepping off the grid or through an undiscovered cell.
+predicate came_from_valid(
+  width : Int,
+  height : Int,
+  cost : FixedArray[Int],
+  came_from : FixedArray[Int],
+) {
+  ∀ r : Int, ∀ c : Int,
+    (in_bounds(width, height, r, c) && discovered(width, cost, r, c) &&
+      came_from[r * width + c] != -1) →
+      (0 <= came_from[r * width + c] &&
+        came_from[r * width + c] < width * height &&
+        0 <= cost[came_from[r * width + c]])
+}
+
+///|
+/// Every discovered cell's recorded predecessor has a strictly smaller
+/// cost than the cell itself. This is what makes the `came_from` chain
+/// well-founded: a cycle would require an impossible strict cost decrease
+/// around a loop, so this rules out cycles and bounds the chain's length
+/// by `width * height` (there are only that many distinct costs a
+/// strictly-decreasing integer sequence can pass through while staying
+/// non-negative and reachable from `cost[start] == 0`). `build_path_core`
+/// needs exactly this to prove its backward walk from any `target` stays
+/// within its fixed-size `scratch` buffer.
+predicate came_from_decreases_cost(
+  width : Int,
+  height : Int,
+  cost : FixedArray[Int],
+  came_from : FixedArray[Int],
+) {
+  ∀ r : Int, ∀ c : Int,
+    (in_bounds(width, height, r, c) && discovered(width, cost, r, c) &&
+      came_from[r * width + c] != -1) →
+      cost[came_from[r * width + c]] < cost[r * width + c]
+}
+
+///|
+/// Postcondition bundle for `search`: every fact `build_path_core` needs
+/// to reconstruct a safe, finite path is captured here so the two
+/// functions share one contract instead of `build_path_core` re-deriving
+/// them from raw array contents. Takes the three result arrays directly
+/// (rather than a `SearchState` struct) so `search`'s `proof_ensure`
+/// closure can pass `result.closed`/`result.cost`/`result.came_from` —
+/// struct field projection is fine inside a logic body (see
+/// `AuctionResult`/`auction_result_post` in this project's own
+/// `batch_auction` case study), it is TUPLE projection (`result.0`) that
+/// this toolchain rejects there.
+predicate search_post(
+  width : Int,
+  height : Int,
+  weights : FixedArray[Int],
+  cost : FixedArray[Int],
+  came_from : FixedArray[Int],
+  start : Int,
+) {
+  same_shape(width, height, cost) &&
+  came_from.length() == width * height &&
+  discovered_avoids_obstacles(width, height, weights, cost) &&
+  came_from_valid(width, height, cost, came_from) &&
+  came_from_decreases_cost(width, height, cost, came_from) &&
+  cost_sentinel_or_nonneg(width, height, cost) &&
+  came_from_neg_one_implies_start(width, height, cost, came_from, start)
+}
+
+///|
+/// The recursive `search_loop` helper carries exactly the facts that used
+/// to be the main `search` loop invariants. Naming the bundle lets the
+/// recursive step state its own precondition without duplicating the
+/// whole list at every call site.
+
+///|
+/// Every cell in `cells[0, len)` is in-bounds and passable — the direct
+/// restatement of the challenge's second requirement ("返回的路径中绝对
+/// 不包含任何被标记为障碍物的节点"). The path buffer is a fixed-size
+/// `FixedArray[Int]` with an explicit valid-length `len` (rather than a
+/// growable `Array[Int]`), because growable-`Array` construction/`.push`
+/// is rejected by this toolchain inside any function carrying a `where`
+/// contract — see `moon-forge/docs/LESSONS.md`.
+predicate path_avoids_obstacles(
+  width : Int,
+  height : Int,
+  weights : FixedArray[Int],
+  cells : FixedArray[Int],
+  len : Int,
+) {
+  0 <= len &&
+  len <= cells.length() &&
+  (∀ i : Int,
+    (0 <= i && i < len) →
+      (0 <= cells[i] && cells[i] < width * height && weights[cells[i]] != 0))
+}
