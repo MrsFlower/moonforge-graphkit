@@ -742,3 +742,44 @@ pub fn guarded_pop_expand_steps(
     },
   }
 }
+
+///|
+pub fn seed_and_expand_queue_steps(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+  steps : Int,
+) -> BfsQueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, start),
+  proof_require: 0 <= steps,
+  proof_require: steps <= vertices,
+  proof_ensure: result => seed_expand_queue_post(vertices, steps, result),
+} {
+  let visited = FixedArray::make(vertices, 0)
+  proof_assert visited_shape(vertices, visited)
+  visited[start] = 1
+  proof_assert visited_shape(vertices, visited)
+  proof_assert marked_vertex(vertices, visited, start)
+  let queue = seed_start_queue(vertices, start)
+  proof_assert bfs_queue_seed_post(vertices, start, queue)
+  let result = guarded_pop_expand_steps(
+    vertices, edges, visited, queue, vertices, steps,
+  )
+  proof_assert guarded_pop_expand_steps_post(vertices, queue, steps, result)
+  proof_assert queue.head == 0
+  proof_assert queue.tail == 1
+  proof_assert queue_bounds(vertices, result)
+  proof_assert queue_valid_prefix(vertices, result, result.tail)
+  proof_assert queue.head <= result.head
+  proof_assert result.head <= queue.head + steps
+  proof_assert 0 <= result.head
+  proof_assert result.head <= steps
+  proof_assert queue.tail <= result.tail
+  proof_assert result.tail <= queue.tail + steps
+  proof_assert 1 <= result.tail
+  proof_assert result.tail <= 1 + steps
+  proof_assert seed_expand_queue_post(vertices, steps, result)
+  result
+}

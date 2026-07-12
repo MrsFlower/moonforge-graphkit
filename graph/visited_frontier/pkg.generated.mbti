@@ -26,6 +26,8 @@ pub fn parent_of(Int, FixedArray[Int], Int) -> Int
 
 pub fn pop_discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue
 
+pub fn seed_and_expand_queue_steps(Int, FixedArray[Int], Int, Int) -> BfsQueue
+
 pub fn seed_start_and_neighbors(Int, FixedArray[Int], Int) -> FixedArray[Int]
 
 pub fn seed_start_layer(Int, FixedArray[Int], Int) -> BfsSeed
