@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/graph/adjacency_matrix"
+
+// Values
+pub fn edge_index(Int, Int, Int) -> Int
+
+pub fn find_out_edge_prefix(Int, FixedArray[Int], Int, Int) -> Int
+
+pub fn is_edge(Int, FixedArray[Int], Int, Int) -> Bool
+
+pub fn is_valid_vertex(Int, Int) -> Bool
+
+pub fn vertex_capacity(Int) -> Int
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
