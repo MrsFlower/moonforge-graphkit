@@ -300,6 +300,23 @@ test "pop discover and enqueue one preserves marked prefix" {
 }
 
 ///|
+test "pop discover and enqueue one source marked" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  visited[0] = 1
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let step = @visited_frontier.pop_discover_and_enqueue_one_source_marked(
+    4, edges, visited, queue, 4,
+  )
+  assert_eq(step.source, 0)
+  assert_eq(step.candidate, 2)
+  assert_eq(step.queue.head, 1)
+  assert_eq(step.queue.tail, 2)
+  assert_true(@visited_frontier.is_marked(4, visited, step.source))
+}
+
+///|
 test "guarded pop expand one" {
   let edges = FixedArray::make(16, 0)
   edges[2] = 1
