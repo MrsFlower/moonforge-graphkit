@@ -278,6 +278,28 @@ predicate dequeue_valid_post(
 }
 
 ///|
+predicate discover_enqueue_post(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  upto : Int,
+  before : BfsQueue,
+  result : BfsDiscoverEnqueue
+) {
+  discover_prefix_post(
+    vertices, edges, visited, source, upto, result.candidate,
+  ) &&
+  (result.candidate < vertices →
+    enqueue_valid_post(vertices, before, result.candidate, result.queue)) &&
+  (vertices <= result.candidate →
+    queue_bounds(vertices, result.queue) &&
+    queue_valid_prefix(vertices, result.queue, result.queue.tail) &&
+    result.queue.head == before.head &&
+    result.queue.tail == before.tail)
+}
+
+///|
 predicate bfs_init_post(
   vertices : Int,
   edges : FixedArray[Int],

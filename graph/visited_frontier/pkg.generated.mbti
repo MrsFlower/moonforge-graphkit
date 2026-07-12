@@ -4,6 +4,8 @@ package "moonforge/moon_forge/graph/visited_frontier"
 // Values
 pub fn dequeue_one(Int, BfsQueue) -> BfsDequeue
 
+pub fn discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], Int, BfsQueue, Int) -> BfsDiscoverEnqueue
+
 pub fn discover_first_unmarked_out_edge_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int) -> Int
 
 pub fn enqueue_one(Int, BfsQueue, Int) -> BfsQueue
@@ -31,6 +33,11 @@ pub fn seed_start_queue(Int, Int) -> BfsQueue
 // Types and methods
 pub(all) struct BfsDequeue {
   vertex : Int
+  queue : BfsQueue
+}
+
+pub(all) struct BfsDiscoverEnqueue {
+  candidate : Int
   queue : BfsQueue
 }
 

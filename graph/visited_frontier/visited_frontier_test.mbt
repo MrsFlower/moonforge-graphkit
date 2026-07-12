@@ -127,3 +127,29 @@ test "dequeue one" {
   assert_eq(second.queue.head, 2)
   assert_eq(second.queue.tail, 2)
 }
+
+///|
+test "discover and enqueue one" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let expanded = @visited_frontier.discover_and_enqueue_one(
+    4, edges, visited, 0, queue, 4,
+  )
+  assert_eq(expanded.candidate, 2)
+  assert_eq(expanded.queue.head, 0)
+  assert_eq(expanded.queue.tail, 2)
+  assert_eq(expanded.queue.queue[1], 2)
+  assert_true(@visited_frontier.is_marked(4, visited, 2))
+  let no_more = @visited_frontier.discover_and_enqueue_one(
+    4,
+    edges,
+    visited,
+    0,
+    expanded.queue,
+    4,
+  )
+  assert_eq(no_more.candidate, 4)
+  assert_eq(no_more.queue.tail, 2)
+}

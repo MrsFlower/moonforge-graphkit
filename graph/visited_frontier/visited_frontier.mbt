@@ -276,6 +276,12 @@ pub(all) struct BfsDequeue {
 }
 
 ///|
+pub(all) struct BfsDiscoverEnqueue {
+  candidate : Int
+  queue : BfsQueue
+}
+
+///|
 pub(all) struct BfsInit {
   seed : BfsSeed
   queue : BfsQueue
@@ -422,4 +428,69 @@ pub fn dequeue_one(
   proof_assert dequeue_post(vertices, state, result)
   proof_assert dequeue_valid_post(vertices, state, result)
   result
+}
+
+///|
+pub fn discover_and_enqueue_one(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  state : BfsQueue,
+  upto : Int,
+) -> BfsDiscoverEnqueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, source),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: state.tail < vertices,
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: result => {
+    discover_enqueue_post(vertices, edges, visited, source, upto, state, result)
+  },
+} {
+  let candidate = discover_first_unmarked_out_edge_prefix(
+    vertices, edges, visited, source, upto,
+  )
+  proof_assert discover_prefix_post(
+    vertices, edges, visited, source, upto, candidate,
+  )
+  if candidate < vertices {
+    proof_assert valid_vertex(vertices, candidate)
+    let next_queue = enqueue_one(vertices, state, candidate)
+    proof_assert enqueue_valid_post(vertices, state, candidate, next_queue)
+    let result = { candidate, queue: next_queue }
+    proof_assert discover_prefix_post(
+      vertices,
+      edges,
+      visited,
+      source,
+      upto,
+      result.candidate,
+    )
+    proof_assert enqueue_valid_post(
+      vertices,
+      state,
+      result.candidate,
+      result.queue,
+    )
+    proof_assert discover_enqueue_post(
+      vertices, edges, visited, source, upto, state, result,
+    )
+    result
+  } else {
+    proof_assert vertices <= candidate
+    let result = { candidate, queue: state }
+    proof_assert queue_bounds(vertices, result.queue)
+    proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
+    proof_assert result.queue.head == state.head
+    proof_assert result.queue.tail == state.tail
+    proof_assert discover_enqueue_post(
+      vertices, edges, visited, source, upto, state, result,
+    )
+    result
+  }
 }
