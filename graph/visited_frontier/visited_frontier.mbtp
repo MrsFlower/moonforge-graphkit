@@ -340,9 +340,18 @@ predicate guarded_pop_expand_post(
 }
 
 ///|
-predicate guarded_pop_expand_steps_post(vertices : Int, result : BfsQueue) {
+predicate guarded_pop_expand_steps_post(
+  vertices : Int,
+  before : BfsQueue,
+  steps : Int,
+  result : BfsQueue
+) {
   queue_bounds(vertices, result) &&
-  queue_valid_prefix(vertices, result, result.tail)
+  queue_valid_prefix(vertices, result, result.tail) &&
+  before.head <= result.head &&
+  result.head <= before.head + steps &&
+  before.tail <= result.tail &&
+  result.tail <= before.tail + steps
 }
 
 ///|

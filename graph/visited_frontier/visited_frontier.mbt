@@ -643,6 +643,10 @@ pub fn guarded_pop_expand_one(
   proof_ensure: result => guarded_pop_expand_post(vertices, state, result),
   proof_ensure: result => queue_bounds(vertices, result),
   proof_ensure: result => queue_valid_prefix(vertices, result, result.tail),
+  proof_ensure: result => state.head <= result.head,
+  proof_ensure: result => result.head <= state.head + 1,
+  proof_ensure: result => state.tail <= result.tail,
+  proof_ensure: result => result.tail <= state.tail + 1,
 } {
   if state.head < state.tail && state.tail < vertices {
     let expanded = pop_discover_and_enqueue_one(
@@ -655,6 +659,8 @@ pub fn guarded_pop_expand_one(
     proof_assert queue_bounds(vertices, result)
     proof_assert queue_valid_prefix(vertices, result, result.tail)
     proof_assert result.head == state.head + 1
+    proof_assert state.head <= result.head
+    proof_assert result.head <= state.head + 1
     proof_assert state.tail <= result.tail
     proof_assert result.tail <= state.tail + 1
     proof_assert !(state.head < state.tail && state.tail < vertices) ||
@@ -671,6 +677,10 @@ pub fn guarded_pop_expand_one(
     proof_assert queue_valid_prefix(vertices, result, result.tail)
     proof_assert result.head == state.head
     proof_assert result.tail == state.tail
+    proof_assert state.head <= result.head
+    proof_assert result.head <= state.head + 1
+    proof_assert state.tail <= result.tail
+    proof_assert result.tail <= state.tail + 1
     proof_assert (state.head < state.tail && state.tail < vertices) ||
       (result.head == state.head && result.tail == state.tail)
     proof_assert guarded_pop_expand_post(vertices, state, result)
@@ -696,7 +706,9 @@ pub fn guarded_pop_expand_steps(
   proof_require: upto <= vertices,
   proof_require: 0 <= steps,
   proof_require: steps <= vertices,
-  proof_ensure: result => guarded_pop_expand_steps_post(vertices, result),
+  proof_ensure: result => {
+    guarded_pop_expand_steps_post(vertices, state, steps, result)
+  },
 } {
   for i = 0, queue = state; i < steps; {
     let next_queue = guarded_pop_expand_one(
@@ -705,6 +717,14 @@ pub fn guarded_pop_expand_steps(
     proof_assert guarded_pop_expand_post(vertices, queue, next_queue)
     proof_assert queue_bounds(vertices, next_queue)
     proof_assert queue_valid_prefix(vertices, next_queue, next_queue.tail)
+    proof_assert queue.head <= next_queue.head
+    proof_assert next_queue.head <= queue.head + 1
+    proof_assert queue.tail <= next_queue.tail
+    proof_assert next_queue.tail <= queue.tail + 1
+    proof_assert state.head <= next_queue.head
+    proof_assert next_queue.head <= state.head + (i + 1)
+    proof_assert state.tail <= next_queue.tail
+    proof_assert next_queue.tail <= state.tail + (i + 1)
     continue i + 1, next_queue
   } nobreak {
     queue
@@ -713,6 +733,12 @@ pub fn guarded_pop_expand_steps(
     proof_invariant: i <= steps,
     proof_invariant: queue_bounds(vertices, queue),
     proof_invariant: queue_valid_prefix(vertices, queue, queue.tail),
-    proof_yield: result => guarded_pop_expand_steps_post(vertices, result),
+    proof_invariant: state.head <= queue.head,
+    proof_invariant: queue.head <= state.head + i,
+    proof_invariant: state.tail <= queue.tail,
+    proof_invariant: queue.tail <= state.tail + i,
+    proof_yield: result => {
+      guarded_pop_expand_steps_post(vertices, state, steps, result)
+    },
   }
 }
