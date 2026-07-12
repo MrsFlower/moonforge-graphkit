@@ -13,6 +13,14 @@ priv struct ChatRequest {
 } derive(ToJson)
 
 ///|
+priv struct PythonHttpRequest {
+  url : String
+  api_key : String
+  body : String
+  proxy_url : String?
+} derive(ToJson)
+
+///|
 priv struct ChatChoiceMessage {
   content : String
 } derive(FromJson)
@@ -164,6 +172,20 @@ pub impl LlmBackend for HttpBackend with fn complete(
     "Content-Type": "application/json",
     "Connection": "close",
   }
+  let response_text = self.post_chat(body, headers)
+  let parsed : ChatResponse = @json.from_json(@json.parse(response_text))
+  guard parsed.choices is [first, ..] else {
+    fail("HTTP backend returned no choices in response")
+  }
+  first.message.content
+}
+
+///|
+async fn HttpBackend::post_chat(
+  self : HttpBackend,
+  body : String,
+  headers : Map[String, String],
+) -> String {
   let proxy = match self.proxy_url {
     Some(proxy_url) => Some(@http.Client(proxy_url))
     None => None
@@ -173,15 +195,92 @@ pub impl LlmBackend for HttpBackend with fn complete(
     body,
     headers~,
     proxy?,
-  )
+  ) catch {
+    _ => return self.post_chat_via_python(body)
+  }
   if response.code < 200 || response.code >= 300 {
     fail(
       "HTTP backend request failed: \{response.code} \{response.reason}\nbody: \{response_body.text()}",
     )
   }
-  let parsed : ChatResponse = @json.from_json(response_body.json())
-  guard parsed.choices is [first, ..] else {
-    fail("HTTP backend returned no choices in response")
+  response_body.text()
+}
+
+///|
+async fn HttpBackend::post_chat_via_python(
+  self : HttpBackend,
+  body : String,
+) -> String {
+  let payload = PythonHttpRequest::{
+    url: self.base_url + "/chat/completions",
+    api_key: self.api_key,
+    body,
+    proxy_url: self.proxy_url,
   }
-  first.message.content
+  let scratch = @fs.tmpdir(prefix="moonforge_http_python_")
+  let payload_path = scratch + "/request.json"
+  @fs.write_file(
+    payload_path,
+    payload.to_json().stringify(),
+    create_mode=CreateOrTruncate,
+  )
+  let script =
+    #|import json, sys, time, urllib.error, urllib.request
+    #|
+    #|with open(sys.argv[1], "r", encoding="utf-8") as f:
+    #|    payload = json.load(f)
+    #|
+    #|handlers = []
+    #|if payload.get("proxy_url"):
+    #|    proxy = payload["proxy_url"]
+    #|    handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+    #|opener = urllib.request.build_opener(*handlers)
+    #|
+    #|request = urllib.request.Request(
+    #|    payload["url"],
+    #|    data=payload["body"].encode("utf-8"),
+    #|    method="POST",
+    #|    headers={
+    #|        "Authorization": "Bearer " + payload["api_key"],
+    #|        "Content-Type": "application/json",
+    #|        "Connection": "close",
+    #|    },
+    #|)
+    #|
+    #|def write_stderr(text):
+    #|    sys.stderr.buffer.write(text.encode("utf-8", errors="replace"))
+    #|
+    #|last_error = None
+    #|for attempt in range(3):
+    #|    try:
+    #|        with opener.open(request, timeout=120) as response:
+    #|            sys.stdout.buffer.write(response.read())
+    #|            sys.exit(0)
+    #|    except urllib.error.HTTPError as err:
+    #|        write_stderr(
+    #|            "HTTP backend request failed: "
+    #|            + str(err.code)
+    #|            + " "
+    #|            + err.reason
+    #|            + "\nbody: "
+    #|            + err.read().decode("utf-8", errors="replace")
+    #|        )
+    #|        sys.exit(2)
+    #|    except Exception as err:
+    #|        last_error = err
+    #|        if attempt < 2:
+    #|            time.sleep(1 + attempt)
+    #|        else:
+    #|            write_stderr(type(err).__name__ + ": " + str(err))
+    #|            sys.exit(1)
+  let result = @shell.run_capture("python", ["-c", script, payload_path])
+  @fs.remove(payload_path) catch {
+    _ => ()
+  }
+  if result.exit_code != 0 {
+    fail(
+      "HTTP backend Python transport failed with exit code \{result.exit_code}\nstderr: \{result.stderr}\nstdout: \{result.stdout}",
+    )
+  }
+  result.stdout
 }

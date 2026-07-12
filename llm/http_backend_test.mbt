@@ -6,7 +6,7 @@ async test "HttpBackend.complete round-trips a trivial prompt through DeepSeek" 
     return
   }
   let backend = HttpBackend::new(
-    "https://api.deepseek.com/v1", api_key, "deepseek-chat",
+    "https://api.deepseek.com/v1", api_key, "deepseek-v4-pro",
   )
   let reply = backend.complete(
     "You are a terse test fixture.", "Reply with exactly this text and nothing else: MOONFORGE_HTTP_BACKEND_OK",
