@@ -1871,6 +1871,73 @@ pub fn seed_and_expand_steps(
 }
 
 ///|
+pub fn seed_and_expand_steps_preserve_marked_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+  steps : Int,
+) -> BfsExpanded where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, start),
+  proof_require: 0 <= steps,
+  proof_require: steps <= vertices,
+  proof_ensure: result => seed_expand_state_post(vertices, steps, result),
+  proof_ensure: result => {
+    queue_marked_prefix(
+      vertices,
+      result.visited,
+      result.queue,
+      result.queue.tail,
+    )
+  },
+} {
+  let seed = seed_start_only_state(vertices, start)
+  proof_assert start_only_state_post(vertices, start, seed)
+  proof_assert queue_marked_prefix(
+    vertices,
+    seed.visited,
+    seed.queue,
+    seed.queue.tail,
+  )
+  let expanded_queue = guarded_pop_expand_steps_preserve_marked_prefix(
+    vertices,
+    edges,
+    seed.visited,
+    seed.queue,
+    vertices,
+    steps,
+  )
+  proof_assert guarded_pop_expand_steps_post(
+    vertices,
+    seed.queue,
+    steps,
+    expanded_queue,
+  )
+  proof_assert visited_shape(vertices, seed.visited)
+  proof_assert queue_marked_prefix(
+    vertices,
+    seed.visited,
+    expanded_queue,
+    expanded_queue.tail,
+  )
+  proof_assert seed.queue.head == 0
+  proof_assert seed.queue.tail == 1
+  proof_assert seed_expand_queue_post(vertices, steps, expanded_queue)
+  let result = { visited: seed.visited, queue: expanded_queue }
+  proof_assert visited_shape(vertices, result.visited)
+  proof_assert seed_expand_queue_post(vertices, steps, result.queue)
+  proof_assert queue_marked_prefix(
+    vertices,
+    result.visited,
+    result.queue,
+    result.queue.tail,
+  )
+  proof_assert seed_expand_state_post(vertices, steps, result)
+  result
+}
+
+///|
 pub fn seed_start_only_state(
   vertices : Int,
   start : Int,

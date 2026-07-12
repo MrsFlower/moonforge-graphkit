@@ -425,6 +425,23 @@ test "seed and expand steps returns visited" {
 }
 
 ///|
+test "seed and expand steps preserves marked prefix" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let expanded = @visited_frontier.seed_and_expand_steps_preserve_marked_prefix(
+    4, edges, 0, 2,
+  )
+  assert_eq(expanded.queue.head, 2)
+  assert_eq(expanded.queue.tail, 2)
+  assert_true(
+    @visited_frontier.is_marked(4, expanded.visited, expanded.queue.queue[0]),
+  )
+  assert_true(
+    @visited_frontier.is_marked(4, expanded.visited, expanded.queue.queue[1]),
+  )
+}
+
+///|
 test "seed start only state" {
   let seed = @visited_frontier.seed_start_only_state(4, 2)
   assert_eq(seed.queue.head, 0)
