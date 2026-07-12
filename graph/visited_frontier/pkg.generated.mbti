@@ -12,6 +12,8 @@ pub fn enqueue_one(Int, BfsQueue, Int) -> BfsQueue
 
 pub fn guarded_pop_expand_one(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsQueue
 
+pub fn guarded_pop_expand_steps(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int) -> BfsQueue
+
 pub fn init_start_frontier(Int, FixedArray[Int], Int) -> BfsInit
 
 pub fn is_marked(Int, FixedArray[Int], Int) -> Bool

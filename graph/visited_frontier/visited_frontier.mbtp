@@ -340,6 +340,12 @@ predicate guarded_pop_expand_post(
 }
 
 ///|
+predicate guarded_pop_expand_steps_post(vertices : Int, result : BfsQueue) {
+  queue_bounds(vertices, result) &&
+  queue_valid_prefix(vertices, result, result.tail)
+}
+
+///|
 predicate bfs_init_post(
   vertices : Int,
   edges : FixedArray[Int],

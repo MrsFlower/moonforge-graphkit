@@ -193,3 +193,18 @@ test "guarded pop expand one" {
   assert_eq(unchanged.head, empty.head)
   assert_eq(unchanged.tail, empty.tail)
 }
+
+///|
+test "guarded pop expand steps" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let done = @visited_frontier.guarded_pop_expand_steps(
+    4, edges, visited, queue, 4, 2,
+  )
+  assert_eq(done.head, 2)
+  assert_eq(done.tail, 2)
+  assert_eq(done.queue[1], 2)
+  assert_true(@visited_frontier.is_marked(4, visited, 2))
+}

@@ -641,6 +641,8 @@ pub fn guarded_pop_expand_one(
   proof_require: 0 <= upto,
   proof_require: upto <= vertices,
   proof_ensure: result => guarded_pop_expand_post(vertices, state, result),
+  proof_ensure: result => queue_bounds(vertices, result),
+  proof_ensure: result => queue_valid_prefix(vertices, result, result.tail),
 } {
   if state.head < state.tail && state.tail < vertices {
     let expanded = pop_discover_and_enqueue_one(
@@ -673,5 +675,44 @@ pub fn guarded_pop_expand_one(
       (result.head == state.head && result.tail == state.tail)
     proof_assert guarded_pop_expand_post(vertices, state, result)
     result
+  }
+}
+
+///|
+pub fn guarded_pop_expand_steps(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  state : BfsQueue,
+  upto : Int,
+  steps : Int,
+) -> BfsQueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_require: 0 <= steps,
+  proof_require: steps <= vertices,
+  proof_ensure: result => guarded_pop_expand_steps_post(vertices, result),
+} {
+  for i = 0, queue = state; i < steps; {
+    let next_queue = guarded_pop_expand_one(
+      vertices, edges, visited, queue, upto,
+    )
+    proof_assert guarded_pop_expand_post(vertices, queue, next_queue)
+    proof_assert queue_bounds(vertices, next_queue)
+    proof_assert queue_valid_prefix(vertices, next_queue, next_queue.tail)
+    continue i + 1, next_queue
+  } nobreak {
+    queue
+  } where {
+    proof_invariant: 0 <= i,
+    proof_invariant: i <= steps,
+    proof_invariant: queue_bounds(vertices, queue),
+    proof_invariant: queue_valid_prefix(vertices, queue, queue.tail),
+    proof_yield: result => guarded_pop_expand_steps_post(vertices, result),
   }
 }
