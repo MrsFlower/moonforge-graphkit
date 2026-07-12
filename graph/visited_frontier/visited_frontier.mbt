@@ -494,6 +494,61 @@ pub fn enqueue_one(
 }
 
 ///|
+pub fn enqueue_one_preserve_marked_prefix(
+  vertices : Int,
+  visited : FixedArray[Int],
+  state : BfsQueue,
+  vertex : Int,
+) -> BfsQueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: queue_marked_prefix(vertices, visited, state, state.tail),
+  proof_require: valid_vertex(vertices, vertex),
+  proof_require: marked_vertex(vertices, visited, vertex),
+  proof_require: state.tail < vertices,
+  proof_ensure: result => enqueue_valid_post(vertices, state, vertex, result),
+  proof_ensure: result => {
+    queue_marked_prefix(vertices, visited, result, result.tail)
+  },
+} {
+  state.queue[state.tail] = vertex
+  proof_assert queue_shape(vertices, state.queue)
+  proof_assert state.queue[state.tail] == vertex
+  proof_assert visited_shape(vertices, visited)
+  proof_assert marked_vertex(vertices, visited, vertex)
+  proof_assert ∀ i : Int,
+    0 <= i && i < state.tail →
+    marked_vertex(vertices, visited, state.queue[i])
+  let queue = state.queue
+  let head = state.head
+  let tail = state.tail + 1
+  proof_assert tail <= vertices
+  let result = { queue, head, tail }
+  proof_assert result.head == state.head
+  proof_assert result.tail == state.tail + 1
+  proof_assert result.queue[state.tail] == vertex
+  proof_assert queue_bounds(vertices, result)
+  proof_assert ∀ i : Int,
+    0 <= i && i < result.tail → valid_vertex(vertices, result.queue[i])
+  proof_assert queue_valid_prefix(vertices, result, result.tail)
+  proof_assert enqueue_post(vertices, state, vertex, result)
+  proof_assert enqueue_valid_post(vertices, state, vertex, result)
+  proof_assert ∀ i : Int,
+    0 <= i && i < result.tail && i < state.tail →
+    marked_vertex(vertices, visited, result.queue[i])
+  proof_assert ∀ i : Int,
+    0 <= i && i < result.tail && !(i < state.tail) →
+    marked_vertex(vertices, visited, result.queue[i])
+  proof_assert ∀ i : Int,
+    0 <= i && i < result.tail →
+    marked_vertex(vertices, visited, result.queue[i])
+  proof_assert queue_marked_prefix(vertices, visited, result, result.tail)
+  result
+}
+
+///|
 pub fn dequeue_one(
   vertices : Int,
   state : BfsQueue,

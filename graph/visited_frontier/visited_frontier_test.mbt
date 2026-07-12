@@ -138,6 +138,23 @@ test "enqueue one" {
 }
 
 ///|
+test "enqueue one preserves marked prefix" {
+  let visited = FixedArray::make(4, 0)
+  visited[2] = 1
+  visited[3] = 1
+  let queue = @visited_frontier.seed_start_queue(4, 2)
+  let queue2 = @visited_frontier.enqueue_one_preserve_marked_prefix(
+    4, visited, queue, 3,
+  )
+  assert_eq(queue2.head, 0)
+  assert_eq(queue2.tail, 2)
+  assert_eq(queue2.queue[0], 2)
+  assert_eq(queue2.queue[1], 3)
+  assert_true(@visited_frontier.is_marked(4, visited, queue2.queue[0]))
+  assert_true(@visited_frontier.is_marked(4, visited, queue2.queue[1]))
+}
+
+///|
 test "dequeue one" {
   let queue = @visited_frontier.seed_start_queue(4, 2)
   let queue2 = @visited_frontier.enqueue_one(4, queue, 3)

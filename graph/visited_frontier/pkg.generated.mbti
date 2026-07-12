@@ -14,6 +14,8 @@ pub fn discover_first_unmarked_out_edge_prefix_preserve_marked(Int, FixedArray[I
 
 pub fn enqueue_one(Int, BfsQueue, Int) -> BfsQueue
 
+pub fn enqueue_one_preserve_marked_prefix(Int, FixedArray[Int], BfsQueue, Int) -> BfsQueue
+
 pub fn guarded_pop_expand_one(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsQueue
 
 pub fn guarded_pop_expand_one_preserve_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int) -> BfsQueue
