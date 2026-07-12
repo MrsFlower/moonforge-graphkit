@@ -22,6 +22,8 @@ pub fn mark_out_neighbors_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int
 
 pub fn mark_vertex(Int, FixedArray[Int], Int) -> Unit
 
+pub fn mark_vertex_preserve_marked(Int, FixedArray[Int], Int, Int) -> Unit
+
 pub fn parent_of(Int, FixedArray[Int], Int) -> Int
 
 pub fn pop_discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue

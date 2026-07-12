@@ -7,6 +7,15 @@ test "mark vertex" {
 }
 
 ///|
+test "mark vertex preserves marked" {
+  let visited = FixedArray::make(4, 0)
+  @visited_frontier.mark_vertex(4, visited, 1)
+  @visited_frontier.mark_vertex_preserve_marked(4, visited, 3, 1)
+  assert_true(@visited_frontier.is_marked(4, visited, 1))
+  assert_true(@visited_frontier.is_marked(4, visited, 3))
+}
+
+///|
 test "discover first unmarked out edge prefix" {
   let edges = FixedArray::make(16, 0)
   edges[1] = 1

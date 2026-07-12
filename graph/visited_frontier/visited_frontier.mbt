@@ -28,6 +28,28 @@ pub fn mark_vertex(
 }
 
 ///|
+pub fn mark_vertex_preserve_marked(
+  vertices : Int,
+  visited : FixedArray[Int],
+  vertex : Int,
+  keep : Int,
+) -> Unit where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, vertex),
+  proof_require: valid_vertex(vertices, keep),
+  proof_require: marked_vertex(vertices, visited, keep),
+  proof_ensure: visited_shape(vertices, visited),
+  proof_ensure: marked_vertex(vertices, visited, vertex),
+  proof_ensure: marked_vertex(vertices, visited, keep),
+} {
+  visited[vertex] = 1
+  proof_assert visited_shape(vertices, visited)
+  proof_assert marked_vertex(vertices, visited, vertex)
+  proof_assert marked_vertex(vertices, visited, keep)
+}
+
+///|
 fn edge_index(
   vertices : Int,
   source : Int,
