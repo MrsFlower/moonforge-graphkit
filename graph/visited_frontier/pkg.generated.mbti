@@ -4,6 +4,8 @@ package "moonforge/moon_forge/graph/visited_frontier"
 // Values
 pub fn discover_first_unmarked_out_edge_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int) -> Int
 
+pub fn init_start_frontier(Int, FixedArray[Int], Int) -> BfsInit
+
 pub fn is_marked(Int, FixedArray[Int], Int) -> Bool
 
 pub fn mark_out_neighbors_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int) -> Unit
@@ -18,9 +20,22 @@ pub fn seed_start_layer(Int, FixedArray[Int], Int) -> BfsSeed
 
 pub fn seed_start_neighbor_parents(Int, FixedArray[Int], Int) -> FixedArray[Int]
 
+pub fn seed_start_queue(Int, Int) -> BfsQueue
+
 // Errors
 
 // Types and methods
+pub(all) struct BfsInit {
+  seed : BfsSeed
+  queue : BfsQueue
+}
+
+pub(all) struct BfsQueue {
+  queue : FixedArray[Int]
+  head : Int
+  tail : Int
+}
+
 pub(all) struct BfsSeed {
   visited : FixedArray[Int]
   parent : FixedArray[Int]

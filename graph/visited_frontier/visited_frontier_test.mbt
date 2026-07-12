@@ -82,3 +82,24 @@ test "seed start layer" {
   assert_eq(@visited_frontier.parent_of(4, seed.parent, 2), 4)
   assert_eq(@visited_frontier.parent_of(4, seed.parent, 3), 0)
 }
+
+///|
+test "seed start queue" {
+  let queue = @visited_frontier.seed_start_queue(4, 2)
+  assert_eq(queue.head, 0)
+  assert_eq(queue.tail, 1)
+  assert_eq(queue.queue[0], 2)
+}
+
+///|
+test "init start frontier" {
+  let edges = FixedArray::make(16, 0)
+  edges[1] = 1
+  edges[3] = 1
+  let init = @visited_frontier.init_start_frontier(4, edges, 0)
+  assert_eq(init.queue.head, 0)
+  assert_eq(init.queue.tail, 1)
+  assert_eq(init.queue.queue[0], 0)
+  assert_true(@visited_frontier.is_marked(4, init.seed.visited, 1))
+  assert_eq(@visited_frontier.parent_of(4, init.seed.parent, 3), 0)
+}

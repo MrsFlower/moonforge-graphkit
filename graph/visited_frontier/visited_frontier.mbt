@@ -263,6 +263,19 @@ pub(all) struct BfsSeed {
 }
 
 ///|
+pub(all) struct BfsQueue {
+  queue : FixedArray[Int]
+  head : Int
+  tail : Int
+}
+
+///|
+pub(all) struct BfsInit {
+  seed : BfsSeed
+  queue : BfsQueue
+}
+
+///|
 pub fn seed_start_layer(
   vertices : Int,
   edges : FixedArray[Int],
@@ -281,5 +294,53 @@ pub fn seed_start_layer(
   proof_assert start_seed_post(vertices, edges, start, result.visited)
   proof_assert start_parent_seed_post(vertices, edges, start, result.parent)
   proof_assert bfs_seed_post(vertices, edges, start, result)
+  result
+}
+
+///|
+pub fn seed_start_queue(
+  vertices : Int,
+  start : Int,
+) -> BfsQueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: valid_vertex(vertices, start),
+  proof_ensure: result => bfs_queue_seed_post(vertices, start, result),
+} {
+  let queue = FixedArray::make(vertices, vertices)
+  proof_assert queue_shape(vertices, queue)
+  queue[0] = start
+  proof_assert queue_shape(vertices, queue)
+  proof_assert queue[0] == start
+  let head = 0
+  let tail = 1
+  proof_assert tail <= vertices
+  let result = { queue, head, tail }
+  proof_assert queue_shape(vertices, result.queue)
+  proof_assert result.head == 0
+  proof_assert result.tail == 1
+  proof_assert result.queue[0] == start
+  proof_assert bfs_queue_seed_post(vertices, start, result)
+  result
+}
+
+///|
+pub fn init_start_frontier(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+) -> BfsInit where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, start),
+  proof_ensure: result => bfs_init_post(vertices, edges, start, result),
+} {
+  let seed = seed_start_layer(vertices, edges, start)
+  proof_assert bfs_seed_post(vertices, edges, start, seed)
+  let queue = seed_start_queue(vertices, start)
+  proof_assert bfs_queue_seed_post(vertices, start, queue)
+  let result = { seed, queue }
+  proof_assert bfs_seed_post(vertices, edges, start, result.seed)
+  proof_assert bfs_queue_seed_post(vertices, start, result.queue)
+  proof_assert bfs_init_post(vertices, edges, start, result)
   result
 }
