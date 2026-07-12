@@ -211,6 +211,24 @@ test "pop discover and enqueue one" {
 }
 
 ///|
+test "pop discover and enqueue one preserves marked" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  visited[1] = 1
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let step = @visited_frontier.pop_discover_and_enqueue_one_preserve_marked(
+    4, edges, visited, queue, 4, 1,
+  )
+  assert_eq(step.source, 0)
+  assert_eq(step.candidate, 2)
+  assert_eq(step.queue.head, 1)
+  assert_eq(step.queue.tail, 2)
+  assert_true(@visited_frontier.is_marked(4, visited, 1))
+  assert_true(@visited_frontier.is_marked(4, visited, 2))
+}
+
+///|
 test "guarded pop expand one" {
   let edges = FixedArray::make(16, 0)
   edges[2] = 1
