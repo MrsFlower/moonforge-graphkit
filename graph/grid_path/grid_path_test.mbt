@@ -20,6 +20,24 @@ test "copy and reverse path prefixes" {
 }
 
 ///|
+test "copy and reverse path prefixes preserve endpoints" {
+  let src = FixedArray::make(5, 0)
+  src[0] = 3
+  src[1] = 4
+  src[2] = 7
+  src[3] = 9
+  src[4] = 11
+  let copied = FixedArray::make(5, -1)
+  @grid_path.copy_path_with_endpoints(src, 4, copied)
+  assert_eq(copied[0], 3)
+  assert_eq(copied[3], 9)
+  let reversed = FixedArray::make(5, -1)
+  @grid_path.reverse_path_with_endpoints(src, 4, reversed)
+  assert_eq(reversed[0], 9)
+  assert_eq(reversed[3], 3)
+}
+
+///|
 test "passable prefix check" {
   let weights = FixedArray::make(6, 1)
   weights[4] = 0

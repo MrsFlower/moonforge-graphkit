@@ -64,3 +64,36 @@ predicate path_reverse_prefix(
   len <= dst.length() &&
   (∀ i : Int, 0 <= i && i < copied → dst[i] == src[len - 1 - i])
 }
+
+///|
+predicate path_endpoints(
+  path : FixedArray[Int],
+  len : Int,
+  start : Int,
+  target : Int
+) {
+  1 <= len &&
+  len <= path.length() &&
+  path[0] == start &&
+  path[len - 1] == target
+}
+
+///|
+predicate copied_path_endpoints(
+  src : FixedArray[Int],
+  dst : FixedArray[Int],
+  len : Int
+) {
+  path_copy_prefix(src, dst, len, len) &&
+  path_endpoints(dst, len, src[0], src[len - 1])
+}
+
+///|
+predicate reversed_path_endpoints(
+  src : FixedArray[Int],
+  dst : FixedArray[Int],
+  len : Int
+) {
+  path_reverse_prefix(src, dst, len, len) &&
+  path_endpoints(dst, len, src[len - 1], src[0])
+}

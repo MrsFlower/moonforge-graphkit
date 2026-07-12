@@ -78,6 +78,44 @@ pub fn reverse_path_prefix(
 }
 
 ///|
+pub fn copy_path_with_endpoints(
+  src : FixedArray[Int],
+  len : Int,
+  dst : FixedArray[Int],
+) -> Unit where {
+  proof_require: 1 <= len,
+  proof_require: len <= src.length(),
+  proof_require: len <= dst.length(),
+  proof_ensure: copied_path_endpoints(src, dst, len),
+} {
+  copy_path_prefix(src, len, dst)
+  proof_assert path_copy_prefix(src, dst, len, len)
+  proof_assert dst[0] == src[0]
+  proof_assert 0 <= len - 1
+  proof_assert len - 1 < len
+  proof_assert dst[len - 1] == src[len - 1]
+}
+
+///|
+pub fn reverse_path_with_endpoints(
+  src : FixedArray[Int],
+  len : Int,
+  dst : FixedArray[Int],
+) -> Unit where {
+  proof_require: 1 <= len,
+  proof_require: len <= src.length(),
+  proof_require: len <= dst.length(),
+  proof_ensure: reversed_path_endpoints(src, dst, len),
+} {
+  reverse_path_prefix(src, len, dst)
+  proof_assert path_reverse_prefix(src, dst, len, len)
+  proof_assert dst[0] == src[len - 1]
+  proof_assert 0 <= len - 1
+  proof_assert len - 1 < len
+  proof_assert dst[len - 1] == src[0]
+}
+
+///|
 pub fn all_passable_prefix(
   width : Int,
   height : Int,
