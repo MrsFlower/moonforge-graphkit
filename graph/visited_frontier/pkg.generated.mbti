@@ -56,6 +56,8 @@ pub fn pop_discover_and_enqueue_one_preserve_marked(Int, FixedArray[Int], FixedA
 
 pub fn pop_discover_and_enqueue_one_preserve_marked_prefix(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue
 
+pub fn pop_discover_and_enqueue_one_source_candidate_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue
+
 pub fn pop_discover_and_enqueue_one_source_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue
 
 pub fn seed_and_expand_queue_steps(Int, FixedArray[Int], Int, Int) -> BfsQueue
