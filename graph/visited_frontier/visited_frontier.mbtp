@@ -316,7 +316,10 @@ predicate pop_discover_enqueue_post(
   queue_valid_prefix(vertices, result.queue, result.queue.tail) &&
   result.queue.head == before.head + 1 &&
   before.tail <= result.queue.tail &&
-  result.queue.tail <= before.tail + 1
+  result.queue.tail <= before.tail + 1 &&
+  (!(result.candidate < vertices) ||
+    result.queue.tail == before.tail + 1) &&
+  (!(vertices <= result.candidate) || result.queue.tail == before.tail)
 }
 
 ///|
