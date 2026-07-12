@@ -103,3 +103,13 @@ test "init start frontier" {
   assert_true(@visited_frontier.is_marked(4, init.seed.visited, 1))
   assert_eq(@visited_frontier.parent_of(4, init.seed.parent, 3), 0)
 }
+
+///|
+test "enqueue one" {
+  let queue = @visited_frontier.seed_start_queue(4, 2)
+  let queue2 = @visited_frontier.enqueue_one(4, queue, 3)
+  assert_eq(queue2.head, 0)
+  assert_eq(queue2.tail, 2)
+  assert_eq(queue2.queue[0], 2)
+  assert_eq(queue2.queue[1], 3)
+}

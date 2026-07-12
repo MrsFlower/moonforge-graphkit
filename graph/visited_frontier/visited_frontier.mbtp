@@ -29,6 +29,15 @@ predicate queue_shape(vertices : Int, queue : FixedArray[Int]) {
 }
 
 ///|
+predicate queue_bounds(vertices : Int, queue : BfsQueue) {
+  valid_vertex_count(vertices) &&
+  queue_shape(vertices, queue.queue) &&
+  0 <= queue.head &&
+  queue.head <= queue.tail &&
+  queue.tail <= vertices
+}
+
+///|
 fn edge_offset(vertices : Int, source : Int, target : Int) -> Int {
   source * vertices + target
 }
@@ -197,15 +206,27 @@ predicate bfs_queue_seed_post(
   start : Int,
   queue : BfsQueue
 ) {
-  valid_vertex_count(vertices) &&
   valid_vertex(vertices, start) &&
-  queue_shape(vertices, queue.queue) &&
+  queue_bounds(vertices, queue) &&
   queue.head == 0 &&
   queue.tail == 1 &&
-  0 <= queue.head &&
-  queue.head <= queue.tail &&
-  queue.tail <= vertices &&
   queue.queue[0] == start
+}
+
+///|
+predicate enqueue_post(
+  vertices : Int,
+  before : BfsQueue,
+  vertex : Int,
+  result : BfsQueue
+) {
+  queue_bounds(vertices, before) &&
+  valid_vertex(vertices, vertex) &&
+  before.tail < vertices &&
+  queue_bounds(vertices, result) &&
+  result.head == before.head &&
+  result.tail == before.tail + 1 &&
+  result.queue[before.tail] == vertex
 }
 
 ///|

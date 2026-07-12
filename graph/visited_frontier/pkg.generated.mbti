@@ -4,6 +4,8 @@ package "moonforge/moon_forge/graph/visited_frontier"
 // Values
 pub fn discover_first_unmarked_out_edge_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int) -> Int
 
+pub fn enqueue_one(Int, BfsQueue, Int) -> BfsQueue
+
 pub fn init_start_frontier(Int, FixedArray[Int], Int) -> BfsInit
 
 pub fn is_marked(Int, FixedArray[Int], Int) -> Bool

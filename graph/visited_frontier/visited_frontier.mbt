@@ -344,3 +344,31 @@ pub fn init_start_frontier(
   proof_assert bfs_init_post(vertices, edges, start, result)
   result
 }
+
+///|
+pub fn enqueue_one(
+  vertices : Int,
+  state : BfsQueue,
+  vertex : Int,
+) -> BfsQueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: valid_vertex(vertices, vertex),
+  proof_require: state.tail < vertices,
+  proof_ensure: result => enqueue_post(vertices, state, vertex, result),
+} {
+  state.queue[state.tail] = vertex
+  proof_assert queue_shape(vertices, state.queue)
+  proof_assert state.queue[state.tail] == vertex
+  let queue = state.queue
+  let head = state.head
+  let tail = state.tail + 1
+  proof_assert tail <= vertices
+  let result = { queue, head, tail }
+  proof_assert result.head == state.head
+  proof_assert result.tail == state.tail + 1
+  proof_assert result.queue[state.tail] == vertex
+  proof_assert queue_bounds(vertices, result)
+  proof_assert enqueue_post(vertices, state, vertex, result)
+  result
+}
