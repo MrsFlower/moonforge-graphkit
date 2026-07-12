@@ -472,6 +472,7 @@ pub fn discover_and_enqueue_one(
   proof_ensure: result => {
     queue_valid_prefix(vertices, result.queue, result.queue.tail)
   },
+  proof_ensure: _result => visited_shape(vertices, visited),
   proof_ensure: result => result.queue.head == state.head,
   proof_ensure: result => state.tail <= result.queue.tail,
   proof_ensure: result => result.queue.tail <= state.tail + 1,
@@ -488,6 +489,7 @@ pub fn discover_and_enqueue_one(
   proof_assert discover_prefix_post(
     vertices, edges, visited, source, upto, candidate,
   )
+  proof_assert visited_shape(vertices, visited)
   if candidate < vertices {
     proof_assert valid_vertex(vertices, candidate)
     let next_queue = enqueue_one(vertices, state, candidate)
@@ -509,6 +511,7 @@ pub fn discover_and_enqueue_one(
       upto,
       result.candidate,
     )
+    proof_assert visited_shape(vertices, visited)
     proof_assert enqueue_valid_post(
       vertices,
       state,
@@ -524,6 +527,7 @@ pub fn discover_and_enqueue_one(
     let result = { candidate, queue: state }
     proof_assert queue_bounds(vertices, result.queue)
     proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
+    proof_assert visited_shape(vertices, visited)
     proof_assert result.queue.head == state.head
     proof_assert result.queue.tail == state.tail
     proof_assert state.tail <= result.queue.tail
@@ -566,6 +570,7 @@ pub fn pop_discover_and_enqueue_one(
   proof_ensure: result => result.queue.head == state.head + 1,
   proof_ensure: result => state.tail <= result.queue.tail,
   proof_ensure: result => result.queue.tail <= state.tail + 1,
+  proof_ensure: _result => visited_shape(vertices, visited),
 } {
   let popped = dequeue_one(vertices, state)
   proof_assert dequeue_valid_post(vertices, state, popped)
@@ -593,6 +598,7 @@ pub fn pop_discover_and_enqueue_one(
     popped.queue,
     expanded,
   )
+  proof_assert visited_shape(vertices, visited)
   let result = {
     source: popped.vertex,
     candidate: expanded.candidate,
@@ -647,6 +653,7 @@ pub fn guarded_pop_expand_one(
   proof_ensure: result => result.head <= state.head + 1,
   proof_ensure: result => state.tail <= result.tail,
   proof_ensure: result => result.tail <= state.tail + 1,
+  proof_ensure: _result => visited_shape(vertices, visited),
 } {
   if state.head < state.tail && state.tail < vertices {
     let expanded = pop_discover_and_enqueue_one(
@@ -655,6 +662,7 @@ pub fn guarded_pop_expand_one(
     proof_assert pop_discover_enqueue_post(
       vertices, edges, visited, upto, state, expanded,
     )
+    proof_assert visited_shape(vertices, visited)
     let result = expanded.queue
     proof_assert queue_bounds(vertices, result)
     proof_assert queue_valid_prefix(vertices, result, result.tail)
@@ -673,6 +681,7 @@ pub fn guarded_pop_expand_one(
     result
   } else {
     let result = state
+    proof_assert visited_shape(vertices, visited)
     proof_assert queue_bounds(vertices, result)
     proof_assert queue_valid_prefix(vertices, result, result.tail)
     proof_assert result.head == state.head
@@ -709,12 +718,14 @@ pub fn guarded_pop_expand_steps(
   proof_ensure: result => {
     guarded_pop_expand_steps_post(vertices, state, steps, result)
   },
+  proof_ensure: _result => visited_shape(vertices, visited),
 } {
   for i = 0, queue = state; i < steps; {
     let next_queue = guarded_pop_expand_one(
       vertices, edges, visited, queue, upto,
     )
     proof_assert guarded_pop_expand_post(vertices, queue, next_queue)
+    proof_assert visited_shape(vertices, visited)
     proof_assert queue_bounds(vertices, next_queue)
     proof_assert queue_valid_prefix(vertices, next_queue, next_queue.tail)
     proof_assert queue.head <= next_queue.head
@@ -733,6 +744,7 @@ pub fn guarded_pop_expand_steps(
     proof_invariant: i <= steps,
     proof_invariant: queue_bounds(vertices, queue),
     proof_invariant: queue_valid_prefix(vertices, queue, queue.tail),
+    proof_invariant: visited_shape(vertices, visited),
     proof_invariant: state.head <= queue.head,
     proof_invariant: queue.head <= state.head + i,
     proof_invariant: state.tail <= queue.tail,
