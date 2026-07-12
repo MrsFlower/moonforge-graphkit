@@ -325,6 +325,7 @@ pub fn seed_start_queue(
   proof_assert result.head == 0
   proof_assert result.tail == 1
   proof_assert result.queue[0] == start
+  proof_assert queue_valid_prefix(vertices, result, result.tail)
   proof_assert bfs_queue_seed_post(vertices, start, result)
   result
 }
@@ -359,13 +360,16 @@ pub fn enqueue_one(
 ) -> BfsQueue where {
   proof_require: valid_vertex_count(vertices),
   proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
   proof_require: valid_vertex(vertices, vertex),
   proof_require: state.tail < vertices,
-  proof_ensure: result => enqueue_post(vertices, state, vertex, result),
+  proof_ensure: result => enqueue_valid_post(vertices, state, vertex, result),
 } {
   state.queue[state.tail] = vertex
   proof_assert queue_shape(vertices, state.queue)
   proof_assert state.queue[state.tail] == vertex
+  proof_assert ∀ i : Int,
+    0 <= i && i < state.tail → valid_vertex(vertices, state.queue[i])
   let queue = state.queue
   let head = state.head
   let tail = state.tail + 1
@@ -375,7 +379,11 @@ pub fn enqueue_one(
   proof_assert result.tail == state.tail + 1
   proof_assert result.queue[state.tail] == vertex
   proof_assert queue_bounds(vertices, result)
+  proof_assert ∀ i : Int,
+    0 <= i && i < result.tail → valid_vertex(vertices, result.queue[i])
+  proof_assert queue_valid_prefix(vertices, result, result.tail)
   proof_assert enqueue_post(vertices, state, vertex, result)
+  proof_assert enqueue_valid_post(vertices, state, vertex, result)
   result
 }
 

@@ -38,6 +38,15 @@ predicate queue_bounds(vertices : Int, queue : BfsQueue) {
 }
 
 ///|
+predicate queue_valid_prefix(vertices : Int, queue : BfsQueue, upto : Int) {
+  queue_bounds(vertices, queue) &&
+  0 <= upto &&
+  upto <= queue.tail &&
+  (∀ i : Int,
+    0 <= i && i < upto → valid_vertex(vertices, queue.queue[i]))
+}
+
+///|
 fn edge_offset(vertices : Int, source : Int, target : Int) -> Int {
   source * vertices + target
 }
@@ -210,7 +219,8 @@ predicate bfs_queue_seed_post(
   queue_bounds(vertices, queue) &&
   queue.head == 0 &&
   queue.tail == 1 &&
-  queue.queue[0] == start
+  queue.queue[0] == start &&
+  queue_valid_prefix(vertices, queue, queue.tail)
 }
 
 ///|
@@ -227,6 +237,18 @@ predicate enqueue_post(
   result.head == before.head &&
   result.tail == before.tail + 1 &&
   result.queue[before.tail] == vertex
+}
+
+///|
+predicate enqueue_valid_post(
+  vertices : Int,
+  before : BfsQueue,
+  vertex : Int,
+  result : BfsQueue
+) {
+  enqueue_post(vertices, before, vertex, result) &&
+  queue_valid_prefix(vertices, before, before.tail) &&
+  queue_valid_prefix(vertices, result, result.tail)
 }
 
 ///|
