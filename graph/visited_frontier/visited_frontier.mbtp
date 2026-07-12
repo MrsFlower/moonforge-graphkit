@@ -174,3 +174,14 @@ predicate start_parent_seed_post(
   parent[start] == start &&
   direct_parent_prefix(vertices, edges, parent, start, vertices)
 }
+
+///|
+predicate bfs_seed_post(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+  seed : BfsSeed
+) {
+  start_seed_post(vertices, edges, start, seed.visited) &&
+  start_parent_seed_post(vertices, edges, start, seed.parent)
+}

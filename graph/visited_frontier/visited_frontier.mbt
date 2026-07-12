@@ -255,3 +255,31 @@ pub fn seed_start_neighbor_parents(
   proof_assert direct_parent_prefix(vertices, edges, parent, start, vertices)
   parent
 }
+
+///|
+pub(all) struct BfsSeed {
+  visited : FixedArray[Int]
+  parent : FixedArray[Int]
+}
+
+///|
+pub fn seed_start_layer(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+) -> BfsSeed where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, start),
+  proof_ensure: result => bfs_seed_post(vertices, edges, start, result),
+} {
+  let visited = seed_start_and_neighbors(vertices, edges, start)
+  proof_assert start_seed_post(vertices, edges, start, visited)
+  let parent = seed_start_neighbor_parents(vertices, edges, start)
+  proof_assert start_parent_seed_post(vertices, edges, start, parent)
+  let result = { visited, parent }
+  proof_assert start_seed_post(vertices, edges, start, result.visited)
+  proof_assert start_parent_seed_post(vertices, edges, start, result.parent)
+  proof_assert bfs_seed_post(vertices, edges, start, result)
+  result
+}
