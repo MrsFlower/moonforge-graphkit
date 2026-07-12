@@ -1242,16 +1242,19 @@ pub fn seed_and_expand_steps(
   proof_require: 0 <= steps,
   proof_require: steps <= vertices,
   proof_ensure: result => seed_expand_state_post(vertices, steps, result),
+  proof_ensure: result => marked_vertex(vertices, result.visited, start),
 } {
   let seed = seed_start_only_state(vertices, start)
   proof_assert start_only_state_post(vertices, start, seed)
-  let expanded_queue = guarded_pop_expand_steps(
+  proof_assert marked_vertex(vertices, seed.visited, start)
+  let expanded_queue = guarded_pop_expand_steps_preserve_marked(
     vertices,
     edges,
     seed.visited,
     seed.queue,
     vertices,
     steps,
+    start,
   )
   proof_assert guarded_pop_expand_steps_post(
     vertices,
@@ -1260,11 +1263,13 @@ pub fn seed_and_expand_steps(
     expanded_queue,
   )
   proof_assert visited_shape(vertices, seed.visited)
+  proof_assert marked_vertex(vertices, seed.visited, start)
   proof_assert seed.queue.head == 0
   proof_assert seed.queue.tail == 1
   proof_assert seed_expand_queue_post(vertices, steps, expanded_queue)
   let result = { visited: seed.visited, queue: expanded_queue }
   proof_assert visited_shape(vertices, result.visited)
+  proof_assert marked_vertex(vertices, result.visited, start)
   proof_assert seed_expand_queue_post(vertices, steps, result.queue)
   proof_assert seed_expand_state_post(vertices, steps, result)
   result
