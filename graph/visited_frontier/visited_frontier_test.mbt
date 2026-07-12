@@ -170,3 +170,26 @@ test "pop discover and enqueue one" {
   assert_eq(step.queue.queue[1], 2)
   assert_true(@visited_frontier.is_marked(4, visited, 2))
 }
+
+///|
+test "guarded pop expand one" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let ready = @visited_frontier.guarded_pop_expand_one(
+    4, edges, visited, queue, 4,
+  )
+  assert_eq(ready.head, 1)
+  assert_eq(ready.tail, 2)
+  assert_eq(ready.queue[1], 2)
+  let empty = @visited_frontier.dequeue_one(
+      4,
+      @visited_frontier.seed_start_queue(4, 1),
+    ).queue
+  let unchanged = @visited_frontier.guarded_pop_expand_one(
+    4, edges, visited, empty, 4,
+  )
+  assert_eq(unchanged.head, empty.head)
+  assert_eq(unchanged.tail, empty.tail)
+}

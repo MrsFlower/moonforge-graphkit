@@ -323,6 +323,23 @@ predicate pop_discover_enqueue_post(
 }
 
 ///|
+predicate guarded_pop_expand_post(
+  vertices : Int,
+  before : BfsQueue,
+  result : BfsQueue
+) {
+  queue_bounds(vertices, result) &&
+  queue_valid_prefix(vertices, result, result.tail) &&
+  (!(before.head < before.tail && before.tail < vertices) ||
+    result.head == before.head + 1 &&
+    before.tail <= result.tail &&
+    result.tail <= before.tail + 1) &&
+  ((before.head < before.tail && before.tail < vertices) ||
+    result.head == before.head &&
+    result.tail == before.tail)
+}
+
+///|
 predicate bfs_init_post(
   vertices : Int,
   edges : FixedArray[Int],
