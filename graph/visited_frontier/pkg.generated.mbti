@@ -28,6 +28,8 @@ pub fn guarded_pop_expand_one_preserve_marked(Int, FixedArray[Int], FixedArray[I
 
 pub fn guarded_pop_expand_one_preserve_marked_prefix(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsQueue
 
+pub fn guarded_pop_expand_one_source_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsGuardedPopExpand
+
 pub fn guarded_pop_expand_steps(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int) -> BfsQueue
 
 pub fn guarded_pop_expand_steps_preserve_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int, Int) -> BfsQueue
@@ -87,6 +89,12 @@ pub(all) struct BfsDiscoverEnqueue {
 
 pub(all) struct BfsExpanded {
   visited : FixedArray[Int]
+  queue : BfsQueue
+}
+
+pub(all) struct BfsGuardedPopExpand {
+  did_expand : Bool
+  source : Int
   queue : BfsQueue
 }
 
