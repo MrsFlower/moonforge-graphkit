@@ -637,6 +637,115 @@ pub fn discover_and_enqueue_one(
 }
 
 ///|
+pub fn discover_and_enqueue_one_preserve_marked(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  state : BfsQueue,
+  upto : Int,
+  keep : Int,
+) -> BfsDiscoverEnqueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, source),
+  proof_require: valid_vertex(vertices, keep),
+  proof_require: marked_vertex(vertices, visited, keep),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: state.tail < vertices,
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: result => {
+    discover_enqueue_post(vertices, edges, visited, source, upto, state, result)
+  },
+  proof_ensure: result => {
+    discover_prefix_post(
+      vertices,
+      edges,
+      visited,
+      source,
+      upto,
+      result.candidate,
+    )
+  },
+  proof_ensure: result => queue_bounds(vertices, result.queue),
+  proof_ensure: result => {
+    queue_valid_prefix(vertices, result.queue, result.queue.tail)
+  },
+  proof_ensure: result => result.queue.head == state.head,
+  proof_ensure: result => state.tail <= result.queue.tail,
+  proof_ensure: result => result.queue.tail <= state.tail + 1,
+  proof_ensure: result => {
+    !(result.candidate < vertices) || result.queue.tail == state.tail + 1
+  },
+  proof_ensure: result => {
+    !(vertices <= result.candidate) || result.queue.tail == state.tail
+  },
+  proof_ensure: _result => marked_vertex(vertices, visited, keep),
+} {
+  let candidate = discover_first_unmarked_out_edge_prefix_preserve_marked(
+    vertices, edges, visited, source, upto, keep,
+  )
+  proof_assert discover_prefix_post(
+    vertices, edges, visited, source, upto, candidate,
+  )
+  proof_assert marked_vertex(vertices, visited, keep)
+  if candidate < vertices {
+    proof_assert valid_vertex(vertices, candidate)
+    let next_queue = enqueue_one(vertices, state, candidate)
+    proof_assert enqueue_valid_post(vertices, state, candidate, next_queue)
+    let result = { candidate, queue: next_queue }
+    proof_assert result.queue.head == state.head
+    proof_assert result.queue.tail == state.tail + 1
+    proof_assert state.tail <= result.queue.tail
+    proof_assert result.queue.tail <= state.tail + 1
+    proof_assert !(result.candidate < vertices) ||
+      result.queue.tail == state.tail + 1
+    proof_assert !(vertices <= result.candidate) ||
+      result.queue.tail == state.tail
+    proof_assert marked_vertex(vertices, visited, keep)
+    proof_assert discover_prefix_post(
+      vertices,
+      edges,
+      visited,
+      source,
+      upto,
+      result.candidate,
+    )
+    proof_assert enqueue_valid_post(
+      vertices,
+      state,
+      result.candidate,
+      result.queue,
+    )
+    proof_assert discover_enqueue_post(
+      vertices, edges, visited, source, upto, state, result,
+    )
+    result
+  } else {
+    proof_assert vertices <= candidate
+    let result = { candidate, queue: state }
+    proof_assert queue_bounds(vertices, result.queue)
+    proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
+    proof_assert result.queue.head == state.head
+    proof_assert result.queue.tail == state.tail
+    proof_assert state.tail <= result.queue.tail
+    proof_assert result.queue.tail <= state.tail + 1
+    proof_assert !(result.candidate < vertices) ||
+      result.queue.tail == state.tail + 1
+    proof_assert !(vertices <= result.candidate) ||
+      result.queue.tail == state.tail
+    proof_assert marked_vertex(vertices, visited, keep)
+    proof_assert discover_enqueue_post(
+      vertices, edges, visited, source, upto, state, result,
+    )
+    result
+  }
+}
+
+///|
 pub fn pop_discover_and_enqueue_one(
   vertices : Int,
   edges : FixedArray[Int],
