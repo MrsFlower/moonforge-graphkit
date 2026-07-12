@@ -155,3 +155,36 @@ pub fn mark_out_neighbors_prefix(
     ),
   }
 }
+
+///|
+pub fn seed_start_and_neighbors(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+) -> FixedArray[Int] where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, start),
+  proof_ensure: result => start_seed_post(vertices, edges, start, result),
+} {
+  let visited = FixedArray::make(vertices, 0)
+  proof_assert visited_shape(vertices, visited)
+  visited[start] = 1
+  proof_assert visited_shape(vertices, visited)
+  proof_assert marked_vertex(vertices, visited, start)
+  mark_out_neighbors_prefix(vertices, edges, visited, start, vertices)
+  proof_assert visited_shape(vertices, visited)
+  proof_assert out_neighbors_marked_prefix(
+    vertices, edges, visited, start, vertices,
+  )
+  visited[start] = 1
+  proof_assert visited_shape(vertices, visited)
+  proof_assert marked_vertex(vertices, visited, start)
+  proof_assert ∀ target : Int,
+    0 <= target && target < vertices && has_edge(vertices, edges, start, target) →
+    marked_vertex(vertices, visited, target)
+  proof_assert out_neighbors_marked_prefix(
+    vertices, edges, visited, start, vertices,
+  )
+  visited
+}

@@ -126,3 +126,15 @@ predicate discover_prefix_post(
     has_edge(vertices, edges, source, result) &&
     marked_vertex(vertices, visited, result))
 }
+
+///|
+predicate start_seed_post(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+  visited : FixedArray[Int]
+) {
+  visited_shape(vertices, visited) &&
+  marked_vertex(vertices, visited, start) &&
+  out_neighbors_marked_prefix(vertices, edges, visited, start, vertices)
+}
