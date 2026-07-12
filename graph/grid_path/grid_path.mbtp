@@ -1,0 +1,66 @@
+///|
+predicate valid_dims(width : Int, height : Int) {
+  0 < width && width <= 100 && 0 < height && height <= 100
+}
+
+///|
+predicate valid_cell(width : Int, height : Int, cell : Int) {
+  0 <= cell && cell < width * height
+}
+
+///|
+predicate same_shape(width : Int, height : Int, cells : FixedArray[Int]) {
+  cells.length() == width * height
+}
+
+///|
+predicate passable_cell(
+  width : Int,
+  height : Int,
+  weights : FixedArray[Int],
+  cell : Int
+) {
+  valid_cell(width, height, cell) && weights[cell] != 0
+}
+
+///|
+predicate valid_path_prefix(
+  width : Int,
+  height : Int,
+  weights : FixedArray[Int],
+  path : FixedArray[Int],
+  len : Int
+) {
+  0 <= len &&
+  len <= path.length() &&
+  (∀ i : Int,
+    0 <= i && i < len → passable_cell(width, height, weights, path[i]))
+}
+
+///|
+predicate path_copy_prefix(
+  src : FixedArray[Int],
+  dst : FixedArray[Int],
+  len : Int,
+  copied : Int
+) {
+  0 <= copied &&
+  copied <= len &&
+  len <= src.length() &&
+  len <= dst.length() &&
+  (∀ i : Int, 0 <= i && i < copied → dst[i] == src[i])
+}
+
+///|
+predicate path_reverse_prefix(
+  src : FixedArray[Int],
+  dst : FixedArray[Int],
+  len : Int,
+  copied : Int
+) {
+  0 <= copied &&
+  copied <= len &&
+  len <= src.length() &&
+  len <= dst.length() &&
+  (∀ i : Int, 0 <= i && i < copied → dst[i] == src[len - 1 - i])
+}

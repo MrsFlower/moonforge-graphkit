@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/graph/grid_path"
+
+// Values
+pub fn all_passable_prefix(Int, Int, FixedArray[Int], FixedArray[Int], Int) -> Bool
+
+pub fn cell_count(Int, Int) -> Int
+
+pub fn copy_path_prefix(FixedArray[Int], Int, FixedArray[Int]) -> Unit
+
+pub fn is_passable_cell(Int, Int, FixedArray[Int], Int) -> Bool
+
+pub fn is_valid_cell(Int, Int, Int) -> Bool
+
+pub fn reverse_path_prefix(FixedArray[Int], Int, FixedArray[Int]) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
