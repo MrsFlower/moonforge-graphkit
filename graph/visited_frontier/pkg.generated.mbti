@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonforge/moon_forge/graph/visited_frontier"
+
+// Values
+pub fn discover_first_unmarked_out_edge_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int) -> Int
+
+pub fn is_marked(Int, FixedArray[Int], Int) -> Bool
+
+pub fn mark_vertex(Int, FixedArray[Int], Int) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

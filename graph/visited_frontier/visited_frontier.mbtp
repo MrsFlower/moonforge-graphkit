@@ -1,0 +1,109 @@
+///|
+predicate valid_vertex_count(vertices : Int) {
+  0 < vertices && vertices <= 100
+}
+
+///|
+predicate valid_vertex(vertices : Int, vertex : Int) {
+  0 <= vertex && vertex < vertices
+}
+
+///|
+predicate adjacency_shape(vertices : Int, edges : FixedArray[Int]) {
+  edges.length() == vertices * vertices
+}
+
+///|
+predicate visited_shape(vertices : Int, visited : FixedArray[Int]) {
+  visited.length() == vertices
+}
+
+///|
+fn edge_offset(vertices : Int, source : Int, target : Int) -> Int {
+  source * vertices + target
+}
+
+///|
+predicate edge_offset_bounds(vertices : Int, source : Int, target : Int) {
+  valid_vertex_count(vertices) &&
+  valid_vertex(vertices, source) &&
+  valid_vertex(vertices, target) &&
+  0 <= edge_offset(vertices, source, target) &&
+  edge_offset(vertices, source, target) < vertices * vertices
+}
+
+///|
+predicate has_edge(
+  vertices : Int,
+  edges : FixedArray[Int],
+  source : Int,
+  target : Int
+) {
+  edge_offset_bounds(vertices, source, target) &&
+  adjacency_shape(vertices, edges) &&
+  edges[edge_offset(vertices, source, target)] != 0
+}
+
+///|
+predicate marked_vertex(
+  vertices : Int,
+  visited : FixedArray[Int],
+  vertex : Int
+) {
+  valid_vertex_count(vertices) &&
+  visited_shape(vertices, visited) &&
+  valid_vertex(vertices, vertex) &&
+  visited[vertex] != 0
+}
+
+///|
+predicate unmarked_out_edge(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  target : Int
+) {
+  has_edge(vertices, edges, source, target) &&
+  visited_shape(vertices, visited) &&
+  visited[target] == 0
+}
+
+///|
+predicate no_unmarked_out_edge_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  upto : Int
+) {
+  valid_vertex_count(vertices) &&
+  adjacency_shape(vertices, edges) &&
+  visited_shape(vertices, visited) &&
+  valid_vertex(vertices, source) &&
+  0 <= upto &&
+  upto <= vertices &&
+  (∀ target : Int,
+    0 <= target && target < upto →
+      !unmarked_out_edge(vertices, edges, visited, source, target))
+}
+
+///|
+predicate discover_prefix_post(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  upto : Int,
+  result : Int
+) {
+  0 <= result &&
+  result <= vertices &&
+  visited_shape(vertices, visited) &&
+  (result == vertices →
+    no_unmarked_out_edge_prefix(vertices, edges, visited, source, upto)) &&
+  (result < vertices →
+    result < upto &&
+    has_edge(vertices, edges, source, result) &&
+    marked_vertex(vertices, visited, result))
+}

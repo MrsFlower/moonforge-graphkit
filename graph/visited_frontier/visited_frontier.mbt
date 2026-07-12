@@ -1,0 +1,111 @@
+///|
+pub fn is_marked(
+  vertices : Int,
+  visited : FixedArray[Int],
+  vertex : Int,
+) -> Bool where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, vertex),
+  proof_ensure: result => result == marked_vertex(vertices, visited, vertex),
+} {
+  visited[vertex] != 0
+}
+
+///|
+pub fn mark_vertex(
+  vertices : Int,
+  visited : FixedArray[Int],
+  vertex : Int,
+) -> Unit where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, vertex),
+  proof_ensure: visited_shape(vertices, visited),
+  proof_ensure: marked_vertex(vertices, visited, vertex),
+} {
+  visited[vertex] = 1
+}
+
+///|
+fn edge_index(
+  vertices : Int,
+  source : Int,
+  target : Int,
+) -> Int where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: valid_vertex(vertices, source),
+  proof_require: valid_vertex(vertices, target),
+  proof_ensure: result => result == edge_offset(vertices, source, target),
+  proof_ensure: result => 0 <= result && result < vertices * vertices,
+} {
+  source * vertices + target
+}
+
+///|
+fn is_edge(
+  vertices : Int,
+  edges : FixedArray[Int],
+  source : Int,
+  target : Int,
+) -> Bool where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, source),
+  proof_require: valid_vertex(vertices, target),
+  proof_ensure: result => result == has_edge(vertices, edges, source, target),
+} {
+  edges[edge_index(vertices, source, target)] != 0
+}
+
+///|
+pub fn discover_first_unmarked_out_edge_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  upto : Int,
+) -> Int where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, source),
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: result => {
+    discover_prefix_post(vertices, edges, visited, source, upto, result)
+  },
+} {
+  for candidate = 0; candidate < upto; {
+    if is_edge(vertices, edges, source, candidate) &&
+      !is_marked(vertices, visited, candidate) {
+      mark_vertex(vertices, visited, candidate)
+      proof_assert has_edge(vertices, edges, source, candidate)
+      proof_assert marked_vertex(vertices, visited, candidate)
+      break candidate
+    } else {
+      proof_assert !unmarked_out_edge(
+        vertices, edges, visited, source, candidate,
+      )
+      proof_assert no_unmarked_out_edge_prefix(
+        vertices,
+        edges,
+        visited,
+        source,
+        candidate + 1,
+      )
+      continue candidate + 1
+    }
+  } nobreak {
+    vertices
+  } where {
+    proof_invariant: 0 <= candidate,
+    proof_invariant: candidate <= upto,
+    proof_invariant: no_unmarked_out_edge_prefix(
+      vertices, edges, visited, source, candidate,
+    ),
+    proof_yield: result => {
+      discover_prefix_post(vertices, edges, visited, source, upto, result)
+    },
+  }
+}
