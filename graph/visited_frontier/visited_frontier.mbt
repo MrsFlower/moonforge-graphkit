@@ -1519,6 +1519,78 @@ pub fn guarded_pop_expand_one_preserve_marked(
 }
 
 ///|
+pub fn guarded_pop_expand_one_preserve_marked_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  state : BfsQueue,
+  upto : Int,
+) -> BfsQueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: queue_marked_prefix(vertices, visited, state, state.tail),
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: result => guarded_pop_expand_post(vertices, state, result),
+  proof_ensure: result => queue_bounds(vertices, result),
+  proof_ensure: result => queue_valid_prefix(vertices, result, result.tail),
+  proof_ensure: result => {
+    queue_marked_prefix(vertices, visited, result, result.tail)
+  },
+  proof_ensure: result => state.head <= result.head,
+  proof_ensure: result => result.head <= state.head + 1,
+  proof_ensure: result => state.tail <= result.tail,
+  proof_ensure: result => result.tail <= state.tail + 1,
+  proof_ensure: _result => visited_shape(vertices, visited),
+} {
+  if state.head < state.tail && state.tail < vertices {
+    let expanded = pop_discover_and_enqueue_one_preserve_marked_prefix(
+      vertices, edges, visited, state, upto,
+    )
+    proof_assert pop_discover_enqueue_post(
+      vertices, edges, visited, upto, state, expanded,
+    )
+    proof_assert visited_shape(vertices, visited)
+    let result = expanded.queue
+    proof_assert queue_bounds(vertices, result)
+    proof_assert queue_valid_prefix(vertices, result, result.tail)
+    proof_assert queue_marked_prefix(vertices, visited, result, result.tail)
+    proof_assert result.head == state.head + 1
+    proof_assert state.head <= result.head
+    proof_assert result.head <= state.head + 1
+    proof_assert state.tail <= result.tail
+    proof_assert result.tail <= state.tail + 1
+    proof_assert !(state.head < state.tail && state.tail < vertices) ||
+      (
+        result.head == state.head + 1 &&
+        state.tail <= result.tail &&
+        result.tail <= state.tail + 1
+      )
+    proof_assert guarded_pop_expand_post(vertices, state, result)
+    result
+  } else {
+    let result = state
+    proof_assert visited_shape(vertices, visited)
+    proof_assert queue_bounds(vertices, result)
+    proof_assert queue_valid_prefix(vertices, result, result.tail)
+    proof_assert queue_marked_prefix(vertices, visited, result, result.tail)
+    proof_assert result.head == state.head
+    proof_assert result.tail == state.tail
+    proof_assert state.head <= result.head
+    proof_assert result.head <= state.head + 1
+    proof_assert state.tail <= result.tail
+    proof_assert result.tail <= state.tail + 1
+    proof_assert (state.head < state.tail && state.tail < vertices) ||
+      (result.head == state.head && result.tail == state.tail)
+    proof_assert guarded_pop_expand_post(vertices, state, result)
+    result
+  }
+}
+
+///|
 pub fn guarded_pop_expand_steps(
   vertices : Int,
   edges : FixedArray[Int],

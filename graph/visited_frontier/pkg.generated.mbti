@@ -26,6 +26,8 @@ pub fn guarded_pop_expand_one(Int, FixedArray[Int], FixedArray[Int], BfsQueue, I
 
 pub fn guarded_pop_expand_one_preserve_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int) -> BfsQueue
 
+pub fn guarded_pop_expand_one_preserve_marked_prefix(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsQueue
+
 pub fn guarded_pop_expand_steps(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int) -> BfsQueue
 
 pub fn guarded_pop_expand_steps_preserve_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int, Int) -> BfsQueue
