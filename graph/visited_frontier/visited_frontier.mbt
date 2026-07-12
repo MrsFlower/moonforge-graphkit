@@ -1416,6 +1416,14 @@ pub fn pop_discover_and_enqueue_one_source_marked(
   proof_ensure: result => state.tail <= result.queue.tail,
   proof_ensure: result => result.queue.tail <= state.tail + 1,
   proof_ensure: result => marked_vertex(vertices, visited, result.source),
+  proof_ensure: result => {
+    !(result.candidate < vertices) ||
+    has_edge(vertices, edges, result.source, result.candidate)
+  },
+  proof_ensure: result => {
+    !(result.candidate < vertices) ||
+    marked_vertex(vertices, visited, result.candidate)
+  },
 } {
   let popped = dequeue_one(vertices, state)
   proof_assert dequeue_valid_post(vertices, state, popped)
@@ -1474,6 +1482,10 @@ pub fn pop_discover_and_enqueue_one_source_marked(
     upto,
     result.candidate,
   )
+  proof_assert !(result.candidate < vertices) ||
+    has_edge(vertices, edges, result.source, result.candidate)
+  proof_assert !(result.candidate < vertices) ||
+    marked_vertex(vertices, visited, result.candidate)
   proof_assert queue_bounds(vertices, result.queue)
   proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
   proof_assert pop_discover_enqueue_post(

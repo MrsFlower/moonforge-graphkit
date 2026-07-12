@@ -314,6 +314,7 @@ test "pop discover and enqueue one source marked" {
   assert_eq(step.queue.head, 1)
   assert_eq(step.queue.tail, 2)
   assert_true(@visited_frontier.is_marked(4, visited, step.source))
+  assert_true(@visited_frontier.is_marked(4, visited, step.candidate))
 }
 
 ///|
