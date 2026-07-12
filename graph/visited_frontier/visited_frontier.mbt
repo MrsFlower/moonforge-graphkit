@@ -472,6 +472,7 @@ pub fn discover_and_enqueue_one(
   proof_ensure: result => {
     queue_valid_prefix(vertices, result.queue, result.queue.tail)
   },
+  proof_ensure: result => result.queue.head == state.head,
 } {
   let candidate = discover_first_unmarked_out_edge_prefix(
     vertices, edges, visited, source, upto,
@@ -484,6 +485,7 @@ pub fn discover_and_enqueue_one(
     let next_queue = enqueue_one(vertices, state, candidate)
     proof_assert enqueue_valid_post(vertices, state, candidate, next_queue)
     let result = { candidate, queue: next_queue }
+    proof_assert result.queue.head == state.head
     proof_assert discover_prefix_post(
       vertices,
       edges,
@@ -534,7 +536,7 @@ pub fn pop_discover_and_enqueue_one(
   proof_require: 0 <= upto,
   proof_require: upto <= vertices,
   proof_ensure: result => {
-    pop_discover_enqueue_post(vertices, edges, visited, upto, result)
+    pop_discover_enqueue_post(vertices, edges, visited, upto, state, result)
   },
 } {
   let popped = dequeue_one(vertices, state)
@@ -568,6 +570,8 @@ pub fn pop_discover_and_enqueue_one(
     candidate: expanded.candidate,
     queue: expanded.queue,
   }
+  proof_assert result.queue.head == popped.queue.head
+  proof_assert result.queue.head == state.head + 1
   proof_assert valid_vertex(vertices, result.source)
   proof_assert discover_prefix_post(
     vertices,
@@ -579,6 +583,8 @@ pub fn pop_discover_and_enqueue_one(
   )
   proof_assert queue_bounds(vertices, result.queue)
   proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
-  proof_assert pop_discover_enqueue_post(vertices, edges, visited, upto, result)
+  proof_assert pop_discover_enqueue_post(
+    vertices, edges, visited, upto, state, result,
+  )
   result
 }

@@ -305,6 +305,7 @@ predicate pop_discover_enqueue_post(
   edges : FixedArray[Int],
   visited : FixedArray[Int],
   upto : Int,
+  before : BfsQueue,
   result : BfsPopDiscoverEnqueue
 ) {
   valid_vertex(vertices, result.source) &&
@@ -312,7 +313,8 @@ predicate pop_discover_enqueue_post(
     vertices, edges, visited, result.source, upto, result.candidate,
   ) &&
   queue_bounds(vertices, result.queue) &&
-  queue_valid_prefix(vertices, result.queue, result.queue.tail)
+  queue_valid_prefix(vertices, result.queue, result.queue.tail) &&
+  result.queue.head == before.head + 1
 }
 
 ///|
