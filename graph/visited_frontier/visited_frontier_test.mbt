@@ -27,3 +27,18 @@ test "discover first unmarked out edge prefix" {
     4,
   )
 }
+
+///|
+test "mark out neighbors prefix" {
+  let edges = FixedArray::make(16, 0)
+  edges[1] = 1
+  edges[3] = 1
+  let visited = FixedArray::make(4, 0)
+  @visited_frontier.mark_out_neighbors_prefix(4, edges, visited, 0, 3)
+  assert_false(@visited_frontier.is_marked(4, visited, 0))
+  assert_true(@visited_frontier.is_marked(4, visited, 1))
+  assert_false(@visited_frontier.is_marked(4, visited, 2))
+  assert_false(@visited_frontier.is_marked(4, visited, 3))
+  @visited_frontier.mark_out_neighbors_prefix(4, edges, visited, 0, 4)
+  assert_true(@visited_frontier.is_marked(4, visited, 3))
+}

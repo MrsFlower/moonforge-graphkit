@@ -6,6 +6,8 @@ pub fn discover_first_unmarked_out_edge_prefix(Int, FixedArray[Int], FixedArray[
 
 pub fn is_marked(Int, FixedArray[Int], Int) -> Bool
 
+pub fn mark_out_neighbors_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int) -> Unit
+
 pub fn mark_vertex(Int, FixedArray[Int], Int) -> Unit
 
 // Errors

@@ -89,6 +89,25 @@ predicate no_unmarked_out_edge_prefix(
 }
 
 ///|
+predicate out_neighbors_marked_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  upto : Int
+) {
+  valid_vertex_count(vertices) &&
+  adjacency_shape(vertices, edges) &&
+  visited_shape(vertices, visited) &&
+  valid_vertex(vertices, source) &&
+  0 <= upto &&
+  upto <= vertices &&
+  (∀ target : Int,
+    0 <= target && target < upto && has_edge(vertices, edges, source, target) →
+      marked_vertex(vertices, visited, target))
+}
+
+///|
 predicate discover_prefix_post(
   vertices : Int,
   edges : FixedArray[Int],

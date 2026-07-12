@@ -109,3 +109,49 @@ pub fn discover_first_unmarked_out_edge_prefix(
     },
   }
 }
+
+///|
+pub fn mark_out_neighbors_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  source : Int,
+  upto : Int,
+) -> Unit where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: valid_vertex(vertices, source),
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: out_neighbors_marked_prefix(
+    vertices, edges, visited, source, upto,
+  ),
+} {
+  for candidate = 0; candidate < upto; {
+    if is_edge(vertices, edges, source, candidate) {
+      visited[candidate] = 1
+      proof_assert visited_shape(vertices, visited)
+      proof_assert marked_vertex(vertices, visited, candidate)
+      proof_assert ∀ target : Int,
+        0 <= target &&
+        target < candidate &&
+        has_edge(vertices, edges, source, target) →
+        marked_vertex(vertices, visited, target)
+    }
+    proof_assert out_neighbors_marked_prefix(
+      vertices,
+      edges,
+      visited,
+      source,
+      candidate + 1,
+    )
+    continue candidate + 1
+  } where {
+    proof_invariant: 0 <= candidate,
+    proof_invariant: candidate <= upto,
+    proof_invariant: out_neighbors_marked_prefix(
+      vertices, edges, visited, source, candidate,
+    ),
+  }
+}
