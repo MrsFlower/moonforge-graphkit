@@ -1714,6 +1714,76 @@ pub fn guarded_pop_expand_steps_preserve_marked(
 }
 
 ///|
+pub fn guarded_pop_expand_steps_preserve_marked_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  state : BfsQueue,
+  upto : Int,
+  steps : Int,
+) -> BfsQueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: queue_marked_prefix(vertices, visited, state, state.tail),
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_require: 0 <= steps,
+  proof_require: steps <= vertices,
+  proof_ensure: result => {
+    guarded_pop_expand_steps_post(vertices, state, steps, result)
+  },
+  proof_ensure: result => {
+    queue_marked_prefix(vertices, visited, result, result.tail)
+  },
+  proof_ensure: _result => visited_shape(vertices, visited),
+} {
+  for i = 0, queue = state; i < steps; {
+    let next_queue = guarded_pop_expand_one_preserve_marked_prefix(
+      vertices, edges, visited, queue, upto,
+    )
+    proof_assert guarded_pop_expand_post(vertices, queue, next_queue)
+    proof_assert visited_shape(vertices, visited)
+    proof_assert queue_bounds(vertices, next_queue)
+    proof_assert queue_valid_prefix(vertices, next_queue, next_queue.tail)
+    proof_assert queue_marked_prefix(
+      vertices,
+      visited,
+      next_queue,
+      next_queue.tail,
+    )
+    proof_assert queue.head <= next_queue.head
+    proof_assert next_queue.head <= queue.head + 1
+    proof_assert queue.tail <= next_queue.tail
+    proof_assert next_queue.tail <= queue.tail + 1
+    proof_assert state.head <= next_queue.head
+    proof_assert next_queue.head <= state.head + (i + 1)
+    proof_assert state.tail <= next_queue.tail
+    proof_assert next_queue.tail <= state.tail + (i + 1)
+    continue i + 1, next_queue
+  } nobreak {
+    queue
+  } where {
+    proof_invariant: 0 <= i,
+    proof_invariant: i <= steps,
+    proof_invariant: queue_bounds(vertices, queue),
+    proof_invariant: queue_valid_prefix(vertices, queue, queue.tail),
+    proof_invariant: queue_marked_prefix(vertices, visited, queue, queue.tail),
+    proof_invariant: visited_shape(vertices, visited),
+    proof_invariant: state.head <= queue.head,
+    proof_invariant: queue.head <= state.head + i,
+    proof_invariant: state.tail <= queue.tail,
+    proof_invariant: queue.tail <= state.tail + i,
+    proof_yield: result => {
+      guarded_pop_expand_steps_post(vertices, state, steps, result) &&
+      queue_marked_prefix(vertices, visited, result, result.tail)
+    },
+  }
+}
+
+///|
 pub fn seed_and_expand_queue_steps(
   vertices : Int,
   edges : FixedArray[Int],

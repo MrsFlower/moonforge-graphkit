@@ -386,6 +386,22 @@ test "guarded pop expand steps preserves marked" {
 }
 
 ///|
+test "guarded pop expand steps preserves marked prefix" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  visited[0] = 1
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let done = @visited_frontier.guarded_pop_expand_steps_preserve_marked_prefix(
+    4, edges, visited, queue, 4, 2,
+  )
+  assert_eq(done.head, 2)
+  assert_eq(done.tail, 2)
+  assert_true(@visited_frontier.is_marked(4, visited, done.queue[0]))
+  assert_true(@visited_frontier.is_marked(4, visited, done.queue[1]))
+}
+
+///|
 test "seed and expand queue steps" {
   let edges = FixedArray::make(16, 0)
   edges[2] = 1
