@@ -5,6 +5,7 @@ import {
   "moonforge/moon_forge/prover_loop",
   "moonbitlang/core/argparse",
   "moonbitlang/core/env",
+  "moonbitlang/core/json",
   "moonbitlang/core/string",
   "moonbitlang/async",
   "moonbitlang/async/fs",

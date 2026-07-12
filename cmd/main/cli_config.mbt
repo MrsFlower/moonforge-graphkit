@@ -136,32 +136,34 @@ async fn resolve_task_text(
 
 ///|
 async fn resolve_backend(matches : @argparse.Matches) -> AnyBackend {
-  match optional_value(matches, "backend").unwrap_or("shell") {
+  match optional_value(matches, "backend").unwrap_or("http") {
     "shell" => {
       let scratch_dir = match optional_value(matches, "scratch-dir") {
         Some(dir) => dir
         None => @fs.tmpdir(prefix="moonforge_cli_")
       }
       let model = optional_value(matches, "model").unwrap_or("gpt-5.5")
-      Shell(@llm.ShellBackend::new(scratch_dir, model~))
+      let activity_log = optional_value(matches, "activity-log")
+      Shell(@llm.ShellBackend::new(scratch_dir, model~, activity_log?))
     }
     "http" => {
-      let base_url = match optional_value(matches, "base-url") {
-        Some(url) => url
-        None => fail("--base-url is required when --backend http")
-      }
-      let model = match optional_value(matches, "model") {
-        Some(model) => model
-        None => fail("--model is required when --backend http")
-      }
-      let api_key = resolve_api_key(matches)
+      let profile = resolve_http_profile(matches)
+      let base_url = optional_value(matches, "base-url").unwrap_or(
+        default_http_base_url(profile),
+      )
+      let model = optional_value(matches, "model").unwrap_or(
+        default_http_model(profile),
+      )
+      let api_key = resolve_api_key(
+        matches,
+        default_env=default_http_api_key_env(profile),
+      )
       let proxy_url = match optional_value(matches, "proxy-url") {
         Some(url) => Some(url)
         None => @env.get_env_var("MOONFORGE_HTTP_PROXY")
       }
-      let extra_system_prompt = if matches.flags.get_or_default(
-          "leanstral-prompt", false,
-        ) {
+      let extra_system_prompt = if profile == "leanstral" ||
+        matches.flags.get_or_default("leanstral-prompt", false) {
         Some(@llm.leanstral_prompt_addendum)
       } else {
         None
@@ -181,25 +183,69 @@ async fn resolve_backend(matches : @argparse.Matches) -> AnyBackend {
 }
 
 ///|
+fn resolve_http_profile(matches : @argparse.Matches) -> String raise {
+  match optional_value(matches, "model-profile").unwrap_or("deepseek") {
+    "deepseek" => "deepseek"
+    "leanstral" => "leanstral"
+    other =>
+      fail(
+        "unknown --model-profile \{other}, expected \"deepseek\" or \"leanstral\"",
+      )
+  }
+}
+
+///|
+fn default_http_base_url(profile : String) -> String {
+  match profile {
+    "leanstral" => "https://api.mistral.ai/v1"
+    _ => "https://api.deepseek.com/v1"
+  }
+}
+
+///|
+fn default_http_model(profile : String) -> String {
+  match profile {
+    "leanstral" => "labs-leanstral-1-5"
+    _ => "deepseek-v4-pro"
+  }
+}
+
+///|
+fn default_http_api_key_env(profile : String) -> String {
+  match profile {
+    "leanstral" => "MISTRAL_API_KEY"
+    _ => "DEEPSEEK_API_KEY"
+  }
+}
+
+///|
 /// Resolve the HTTP backend's API key: a literal `--api-key` value takes
 /// precedence (documented as a scripting convenience with a shell-history
 /// exposure tradeoff), otherwise read `--api-key-env`'s named environment
-/// variable. Fails before ever constructing `HttpBackend` if neither
-/// resolves to a non-empty string, so a request is never sent with an
-/// empty credential.
-fn resolve_api_key(matches : @argparse.Matches) -> String raise {
+/// variable. The default env var is chosen by the HTTP model profile;
+/// `MOONFORGE_API_KEY` remains a fallback for existing scripts. Fails
+/// before ever constructing `HttpBackend` if neither resolves to a
+/// non-empty string, so a request is never sent with an empty credential.
+fn resolve_api_key(
+  matches : @argparse.Matches,
+  default_env~ : String,
+) -> String raise {
   match optional_value(matches, "api-key") {
     Some(key) if key != "" => key
     _ => {
       let env_var = optional_value(matches, "api-key-env").unwrap_or(
-        "MOONFORGE_API_KEY",
+        default_env,
       )
       match @env.get_env_var(env_var) {
         Some(key) if key != "" => key
         _ =>
-          fail(
-            "no API key available: --api-key was not given and environment variable \{env_var} is unset or empty",
-          )
+          match @env.get_env_var("MOONFORGE_API_KEY") {
+            Some(key) if key != "" => key
+            _ =>
+              fail(
+                "no API key available: --api-key was not given and neither environment variable \{env_var} nor MOONFORGE_API_KEY is set to a non-empty value",
+              )
+          }
       }
     }
   }
@@ -265,6 +311,99 @@ async fn build_run_config(
     max_rounds: @string.parse_int(
       optional_value(matches, "max-rounds").unwrap_or("5"),
     ),
+  }
+}
+
+///|
+async fn build_sequence_run_config(
+  matches : @argparse.Matches,
+) -> @orchestrator.SequenceRunConfig {
+  let native_module_root = required_value(matches, "module-root")
+  let package_path = required_value(matches, "package-path")
+  let pkg_name = resolve_pkg_name(matches, package_path)
+  validate_no_shell_metacharacters(native_module_root, "module-root")
+  validate_no_shell_metacharacters(package_path, "package-path")
+  validate_no_shell_metacharacters(pkg_name, "pkg-name")
+  let module_root = match optional_value(matches, "wsl-module-root") {
+    Some(path) => path
+    None =>
+      if optional_value(matches, "prove-runner").unwrap_or("wsl") == "local" {
+        native_module_root
+      } else {
+        windows_path_to_wsl(native_module_root)
+      }
+  }
+  let target_file = required_value(matches, "target-file")
+  let plan_file = required_value(matches, "plan-file")
+  let plan_text = @fs.read_file(plan_file).text()
+  let regions = parse_sequence_regions(plan_text)
+  {
+    module_root,
+    native_module_root,
+    package_path,
+    pkg_name,
+    target_file,
+    regions,
+    max_rounds: @string.parse_int(
+      optional_value(matches, "max-rounds").unwrap_or("5"),
+    ),
+    clear_current_region: matches.flags.get_or_default(
+      "clear-current-region", false,
+    ),
+  }
+}
+
+///|
+fn parse_sequence_regions(
+  plan_text : String,
+) -> Array[@orchestrator.RunRegion] raise {
+  let parsed = @json.parse(plan_text)
+  guard parsed is Object(fields) else {
+    fail("fill-sequence plan must be a JSON object")
+  }
+  guard fields.get("regions") is Some(Array(items)) else {
+    fail("fill-sequence plan must contain a regions array")
+  }
+  guard items.length() > 0 else {
+    fail("fill-sequence plan must contain at least one region")
+  }
+  let regions : Array[@orchestrator.RunRegion] = []
+  for i in 0..<items.length() {
+    guard items[i] is Object(region_fields) else {
+      fail("fill-sequence regions[\{i}] must be a JSON object")
+    }
+    let default_name = "step-\{i + 1}"
+    regions.push({
+      name: optional_json_string(region_fields, "name").unwrap_or(default_name),
+      start_tag: required_json_string(region_fields, "start_tag"),
+      end_tag: required_json_string(region_fields, "end_tag"),
+      user_task: required_json_string(region_fields, "task"),
+    })
+  }
+  regions
+}
+
+///|
+fn required_json_string(
+  fields : Map[String, Json],
+  key : String,
+) -> String raise {
+  match fields.get(key) {
+    Some(String(value)) => value
+    Some(_) => fail("fill-sequence plan field \{key} must be a string")
+    None => fail("fill-sequence plan is missing required field \{key}")
+  }
+}
+
+///|
+fn optional_json_string(
+  fields : Map[String, Json],
+  key : String,
+) -> String? raise {
+  match fields.get(key) {
+    Some(String(value)) => Some(value)
+    Some(_) => fail("fill-sequence plan field \{key} must be a string")
+    None => None
   }
 }
 

@@ -9,6 +9,8 @@ import {
 // Values
 pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] run(B, G, R, RunConfig) -> RunResult
 
+pub async fn[B : @llm.LlmBackend, G : @prover_loop.CheckGate, R : @prover_loop.ProveRunner] run_sequence(B, G, R, SequenceRunConfig) -> SequenceRunResult
+
 // Errors
 
 // Types and methods
@@ -24,10 +26,38 @@ pub(all) struct RunConfig {
   max_rounds : Int
 }
 
+pub(all) struct RunRegion {
+  name : String
+  start_tag : String
+  end_tag : String
+  user_task : String
+}
+
 pub(all) enum RunResult {
   VerificationSuccess(rounds_used~ : Int)
   NeedsHumanReview(reason~ : String)
   RoundsExhausted(last_kind~ : @prover_loop.FailureKind, last_outcome~ : @prover_loop.ProveOutcome)
+}
+
+pub(all) struct SequenceRunConfig {
+  module_root : String
+  native_module_root : String
+  package_path : String
+  pkg_name : String
+  target_file : String
+  regions : Array[RunRegion]
+  max_rounds : Int
+  clear_current_region : Bool
+}
+
+pub(all) enum SequenceRunResult {
+  SequenceSuccess(steps~ : Array[SequenceStepSuccess])
+  SequenceStopped(step_index~ : Int, step_name~ : String, result~ : RunResult)
+}
+
+pub(all) struct SequenceStepSuccess {
+  name : String
+  rounds_used : Int
 }
 
 // Type aliases

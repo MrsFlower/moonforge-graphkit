@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn build_invariant_fragment_repair_instructions(String) -> String
+
 pub fn build_repair_instructions(String) -> String
 
 pub fn build_scaffold_repair_instructions(String) -> String
@@ -13,6 +15,8 @@ pub fn build_scaffold_repair_instructions(String) -> String
 pub fn split_scaffold_files(String) -> ScaffoldSanitizeResult
 
 pub fn strip_markdown(String) -> SanitizeResult
+
+pub fn validate_invariant_fragment(String) -> SanitizeResult
 
 // Errors
 

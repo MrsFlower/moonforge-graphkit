@@ -159,3 +159,109 @@ async test "NeedsReview exhausting all rounds still ends in NeedsHumanReview" {
       )
   }
 }
+
+///|
+async test "whole-file responses for invariant regions are retried before injection" {
+  let fixture = make_tagged_fixture()
+  let target_file = @fs.tmpdir(prefix="moonforge_wbtest_fragment_") +
+    "/target.mbt"
+  @fs.write_file(target_file, fixture, create_mode=CreateOrTruncate)
+  let backend = ScriptedBackend::new([
+    "```mbt\n///|\npub fn bad() -> Int { 1 }\n```", "```mbt\nproof_invariant: lo <= hi,\n```",
+  ])
+  let config : RunConfig = {
+    module_root: "unused",
+    native_module_root: "unused",
+    package_path: "unused",
+    pkg_name: "unused",
+    target_file,
+    start_tag: "// START",
+    end_tag: "// END",
+    user_task: "irrelevant for this test",
+    max_rounds: 2,
+  }
+  let result = run(
+    backend,
+    AlwaysPassesGate::{  },
+    AlwaysSucceedsRunner::{  },
+    config,
+  )
+  match result {
+    VerificationSuccess(rounds_used~) => assert_eq(rounds_used, 2)
+    NeedsHumanReview(reason~) =>
+      fail(
+        "expected retry after whole-file fragment rejection, got NeedsHumanReview: " +
+        reason,
+      )
+    RoundsExhausted(_) =>
+      fail("expected retry success after whole-file fragment rejection")
+  }
+  let written = @fs.read_file(target_file).text()
+  assert_true(!written.contains("pub fn bad"))
+  assert_true(written.contains("proof_invariant: lo <= hi"))
+}
+
+///|
+async test "run_sequence fills regions cumulatively in order" {
+  let fixture =
+    #|before
+    #|// A_START
+    #|stale first
+    #|// A_END
+    #|between
+    #|// B_START
+    #|stale second
+    #|// B_END
+    #|after
+  let target_file = @fs.tmpdir(prefix="moonforge_wbtest_sequence_") +
+    "/target.mbt"
+  @fs.write_file(target_file, fixture, create_mode=CreateOrTruncate)
+  let backend = ScriptedBackend::new([
+    "```mbt\nproof_invariant: a <= b,\n```", "```mbt\nproof_invariant: c <= d,\n```",
+  ])
+  let config : SequenceRunConfig = {
+    module_root: "unused",
+    native_module_root: "unused",
+    package_path: "unused",
+    pkg_name: "unused",
+    target_file,
+    regions: [
+      {
+        name: "first",
+        start_tag: "// A_START",
+        end_tag: "// A_END",
+        user_task: "fill first",
+      },
+      {
+        name: "second",
+        start_tag: "// B_START",
+        end_tag: "// B_END",
+        user_task: "fill second",
+      },
+    ],
+    max_rounds: 1,
+    clear_current_region: true,
+  }
+  let result = run_sequence(
+    backend,
+    AlwaysPassesGate::{  },
+    AlwaysSucceedsRunner::{  },
+    config,
+  )
+  match result {
+    SequenceSuccess(steps~) => {
+      assert_eq(steps.length(), 2)
+      assert_eq(steps[0].name, "first")
+      assert_eq(steps[0].rounds_used, 1)
+      assert_eq(steps[1].name, "second")
+      assert_eq(steps[1].rounds_used, 1)
+    }
+    SequenceStopped(step_name~, ..) =>
+      fail("expected sequence success, stopped at \{step_name}")
+  }
+  let written = @fs.read_file(target_file).text()
+  assert_true(written.contains("proof_invariant: a <= b"))
+  assert_true(written.contains("proof_invariant: c <= d"))
+  assert_true(!written.contains("stale first"))
+  assert_true(!written.contains("stale second"))
+}

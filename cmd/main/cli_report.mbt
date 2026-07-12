@@ -28,6 +28,27 @@ async fn report_run_result(result : @orchestrator.RunResult) -> Int {
 }
 
 ///|
+async fn report_sequence_run_result(
+  result : @orchestrator.SequenceRunResult,
+) -> Int {
+  match result {
+    SequenceSuccess(steps~) => {
+      println("fill-sequence succeeded after \{steps.length()} step(s)")
+      for step in steps {
+        println("  \{step.name}: \{step.rounds_used} round(s)")
+      }
+      0
+    }
+    SequenceStopped(step_index~, step_name~, result~) => {
+      @stdio.stderr.write(
+        "fill-sequence stopped at step \{step_index + 1} (\{step_name})\n",
+      )
+      report_run_result(result)
+    }
+  }
+}
+
+///|
 async fn report_scaffold_result(result : @scaffolder.ScaffoldResult) -> Int {
   match result {
     ScaffoldSuccess(package_dir~, files_written~) => {

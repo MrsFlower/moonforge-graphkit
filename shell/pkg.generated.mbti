@@ -6,9 +6,11 @@ import {
 }
 
 // Values
-pub async fn run_capture(String, Array[String], cwd? : String) -> CommandResult
+pub async fn run_capture(String, Array[String], cwd? : String, stdin_path? : String) -> CommandResult
 
 pub async fn run_capture_merged(String, Array[String], cwd? : String) -> CommandResult
+
+pub async fn run_capture_to_file(String, Array[String], String, cwd? : String, stdin_path? : String) -> (Int, String)
 
 // Errors
 

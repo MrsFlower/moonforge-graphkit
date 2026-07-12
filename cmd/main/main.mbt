@@ -24,6 +24,7 @@ async fn main {
     }
     match name {
       "fill" => run_fill(sub_matches)
+      "fill-sequence" => run_fill_sequence(sub_matches)
       "scaffold" => run_scaffold(sub_matches)
       "scaffold-and-fill" => run_scaffold_and_fill(sub_matches)
       other => {
@@ -52,6 +53,20 @@ async fn run_fill(matches : @argparse.Matches) -> Int {
     config,
   )
   report_run_result(result)
+}
+
+///|
+async fn run_fill_sequence(matches : @argparse.Matches) -> Int {
+  let config = build_sequence_run_config(matches)
+  let backend = resolve_backend(matches)
+  let runner = resolve_prove_runner(matches)
+  let result = @orchestrator.run_sequence(
+    backend,
+    @prover_loop.RealCheckGate::{  },
+    runner,
+    config,
+  )
+  report_sequence_run_result(result)
 }
 
 ///|

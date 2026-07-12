@@ -78,3 +78,54 @@ test "strip_markdown trims blank lines inside the fence" {
   guard result is Clean(code~) else { fail("expected Clean, got NeedsReview") }
   assert_eq(code, "let x = 1")
 }
+
+///|
+test "validate_invariant_fragment accepts invariant-only code" {
+  let code =
+    #|proof_invariant: 0 <= i,
+    #|proof_invariant: i <= xs.length(),
+    #|proof_assert xs.length() == ys.length()
+  let result = @sanitizer.validate_invariant_fragment(code)
+  guard result is Clean(code~) else { fail("expected Clean, got NeedsReview") }
+  assert_true(code.contains("proof_invariant"))
+}
+
+///|
+test "validate_invariant_fragment rejects a whole function" {
+  let code =
+    #|///|
+    #|pub fn isqrt(n : Int) -> Int {
+    #|  n
+    #|}
+  let result = @sanitizer.validate_invariant_fragment(code)
+  assert_true(result is NeedsReview(_))
+}
+
+///|
+test "validate_invariant_fragment rejects top-level declarations without delimiter" {
+  let code =
+    #|pub struct Bad {
+    #|  value : Int
+    #|}
+  let result = @sanitizer.validate_invariant_fragment(code)
+  assert_true(result is NeedsReview(_))
+}
+
+///|
+test "validate_invariant_fragment rejects repeated MoonForge tags" {
+  let code =
+    #|// @MOONFORGE_INVARIANT_START
+    #|proof_invariant: 0 <= i,
+    #|// @MOONFORGE_INVARIANT_END
+  let result = @sanitizer.validate_invariant_fragment(code)
+  assert_true(result is NeedsReview(_))
+}
+
+///|
+test "build_invariant_fragment_repair_instructions asks for only tag contents" {
+  let prompt = @sanitizer.build_invariant_fragment_repair_instructions(
+    "response contains top-level MoonBit syntax",
+  )
+  assert_true(prompt.contains("ONLY the tagged invariant region"))
+  assert_true(prompt.contains("Do not return the whole function"))
+}

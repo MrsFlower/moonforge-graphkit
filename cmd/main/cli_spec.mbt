@@ -10,12 +10,17 @@ fn common_backend_options() -> Array[@argparse.OptionArg] {
   [
     @argparse.OptionArg(
       "backend",
-      about="LLM backend: \"shell\" (codex exec, default) or \"http\" (OpenAI-compatible /chat/completions)",
-      default_values=["shell"],
+      about="LLM backend: \"http\" (OpenAI-compatible /chat/completions, defaulting to DeepSeek) or \"shell\" (codex exec fallback)",
+      default_values=["http"],
     ),
     @argparse.OptionArg(
       "model",
-      about="Model name. Defaults to \"gpt-5.5\" for --backend shell; required for --backend http",
+      about="Model name. Defaults to \"deepseek-v4-pro\" for --backend http and \"gpt-5.5\" for --backend shell",
+    ),
+    @argparse.OptionArg(
+      "model-profile",
+      about="HTTP model profile: \"deepseek\" (default, general MoonBit code/proof work) or \"leanstral\" (Mistral Leanstral 1.5 evaluation profile)",
+      default_values=["deepseek"],
     ),
     @argparse.OptionArg(
       "scratch-dir",
@@ -23,7 +28,7 @@ fn common_backend_options() -> Array[@argparse.OptionArg] {
     ),
     @argparse.OptionArg(
       "base-url",
-      about="API base URL for --backend http, e.g. https://api.deepseek.com/v1 (required for http)",
+      about="API base URL for --backend http. Defaults to https://api.deepseek.com/v1",
     ),
     @argparse.OptionArg(
       "api-key",
@@ -31,12 +36,15 @@ fn common_backend_options() -> Array[@argparse.OptionArg] {
     ),
     @argparse.OptionArg(
       "api-key-env",
-      about="Name of the environment variable holding the API key for --backend http",
-      default_values=["MOONFORGE_API_KEY"],
+      about="Name of the environment variable holding the API key for --backend http. Defaults by --model-profile: DEEPSEEK_API_KEY for deepseek, MISTRAL_API_KEY for leanstral; MOONFORGE_API_KEY remains a fallback",
     ),
     @argparse.OptionArg(
       "proxy-url",
       about="HTTP proxy for --backend http. Defaults to $MOONFORGE_HTTP_PROXY when unset",
+    ),
+    @argparse.OptionArg(
+      "activity-log",
+      about="--backend shell only: path to stream codex exec --json's live event log (reasoning/tool-call/token-usage events) to, so a caller can watch progress before the call finishes. Omit for the pre-existing behavior (no --json, only the final answer)",
     ),
   ]
 }
@@ -158,6 +166,58 @@ fn build_fill_command() -> @argparse.Command {
 }
 
 ///|
+fn build_fill_sequence_command() -> @argparse.Command {
+  @argparse.Command(
+    "fill-sequence",
+    about="Fill several tagged invariant regions in order from a JSON plan file (wraps orchestrator.run_sequence)",
+    options=common_backend_options() +
+      common_runner_options() +
+      [
+        @argparse.OptionArg(
+          "module-root",
+          about="Windows path to the MoonBit module root (directory with moon.mod)",
+          required=true,
+        ),
+        @argparse.OptionArg(
+          "wsl-module-root",
+          about="WSL2-internal path to the module root, overriding automatic C:/... -> /mnt/c/... derivation",
+        ),
+        @argparse.OptionArg(
+          "package-path",
+          about="Package path relative to module-root, e.g. \"astar_grid\"",
+          required=true,
+        ),
+        @argparse.OptionArg(
+          "pkg-name",
+          about="Bare package name. Defaults to the last segment of --package-path",
+        ),
+        @argparse.OptionArg(
+          "target-file",
+          about="Windows path to the .mbt file containing the tagged regions",
+          required=true,
+        ),
+        @argparse.OptionArg(
+          "plan-file",
+          about="JSON file with a regions array; each region has name, start_tag, end_tag, and task fields",
+          required=true,
+        ),
+        @argparse.OptionArg(
+          "max-rounds",
+          about="Maximum LLM <-> moon prove rounds per region",
+          default_values=["5"],
+        ),
+      ],
+    flags=common_backend_flags() +
+      [
+        @argparse.FlagArg(
+          "clear-current-region",
+          about="Before each sequence step, clear that step's tagged region while preserving earlier generated regions and later known-good regions",
+        ),
+      ],
+  )
+}
+
+///|
 fn build_scaffold_command() -> @argparse.Command {
   @argparse.Command(
     "scaffold",
@@ -275,6 +335,7 @@ fn build_root_command() -> @argparse.Command {
     subcommand_required=true,
     subcommands=[
       build_fill_command(),
+      build_fill_sequence_command(),
       build_scaffold_command(),
       build_scaffold_and_fill_command(),
     ],

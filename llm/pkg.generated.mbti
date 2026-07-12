@@ -21,8 +21,9 @@ pub struct ShellBackend {
   command : String
   model : String?
   scratch_dir : String
+  activity_log : String?
 }
-pub fn ShellBackend::new(String, model? : String) -> Self
+pub fn ShellBackend::new(String, model? : String, activity_log? : String) -> Self
 pub impl LlmBackend for ShellBackend
 
 // Type aliases
