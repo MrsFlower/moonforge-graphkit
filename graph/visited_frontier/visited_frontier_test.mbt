@@ -169,6 +169,25 @@ test "dequeue one" {
 }
 
 ///|
+test "dequeue one preserves marked prefix" {
+  let visited = FixedArray::make(4, 0)
+  visited[2] = 1
+  visited[3] = 1
+  let queue = @visited_frontier.seed_start_queue(4, 2)
+  let queue2 = @visited_frontier.enqueue_one_preserve_marked_prefix(
+    4, visited, queue, 3,
+  )
+  let first = @visited_frontier.dequeue_one_preserve_marked_prefix(
+    4, visited, queue2,
+  )
+  assert_eq(first.vertex, 2)
+  assert_eq(first.queue.head, 1)
+  assert_eq(first.queue.tail, 2)
+  assert_true(@visited_frontier.is_marked(4, visited, first.queue.queue[0]))
+  assert_true(@visited_frontier.is_marked(4, visited, first.queue.queue[1]))
+}
+
+///|
 test "discover and enqueue one" {
   let edges = FixedArray::make(16, 0)
   edges[2] = 1
@@ -260,6 +279,24 @@ test "pop discover and enqueue one preserves marked" {
   assert_eq(step.queue.tail, 2)
   assert_true(@visited_frontier.is_marked(4, visited, 1))
   assert_true(@visited_frontier.is_marked(4, visited, 2))
+}
+
+///|
+test "pop discover and enqueue one preserves marked prefix" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  visited[0] = 1
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let step = @visited_frontier.pop_discover_and_enqueue_one_preserve_marked_prefix(
+    4, edges, visited, queue, 4,
+  )
+  assert_eq(step.source, 0)
+  assert_eq(step.candidate, 2)
+  assert_eq(step.queue.head, 1)
+  assert_eq(step.queue.tail, 2)
+  assert_true(@visited_frontier.is_marked(4, visited, step.queue.queue[0]))
+  assert_true(@visited_frontier.is_marked(4, visited, step.queue.queue[1]))
 }
 
 ///|

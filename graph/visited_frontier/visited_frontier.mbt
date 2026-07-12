@@ -688,6 +688,65 @@ pub fn dequeue_one(
 }
 
 ///|
+pub fn dequeue_one_preserve_marked_prefix(
+  vertices : Int,
+  visited : FixedArray[Int],
+  state : BfsQueue,
+) -> BfsDequeue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: queue_marked_prefix(vertices, visited, state, state.tail),
+  proof_require: state.head < state.tail,
+  proof_ensure: result => dequeue_valid_post(vertices, state, result),
+  proof_ensure: result => {
+    queue_marked_prefix(vertices, visited, result.queue, result.queue.tail)
+  },
+} {
+  let vertex = state.queue[state.head]
+  proof_assert valid_vertex(vertices, vertex)
+  let queue_buffer = state.queue
+  let head = state.head + 1
+  let tail = state.tail
+  proof_assert head <= tail
+  let next_queue = { queue: queue_buffer, head, tail }
+  proof_assert queue_shape(vertices, next_queue.queue)
+  proof_assert next_queue.head == state.head + 1
+  proof_assert next_queue.tail == state.tail
+  proof_assert queue_bounds(vertices, next_queue)
+  proof_assert ∀ i : Int,
+    0 <= i && i < next_queue.tail →
+    valid_vertex(vertices, next_queue.queue[i])
+  proof_assert queue_valid_prefix(vertices, next_queue, next_queue.tail)
+  proof_assert ∀ i : Int,
+    0 <= i && i < next_queue.tail →
+    marked_vertex(vertices, visited, next_queue.queue[i])
+  proof_assert queue_marked_prefix(
+    vertices,
+    visited,
+    next_queue,
+    next_queue.tail,
+  )
+  let queue = next_queue
+  let result = { vertex, queue }
+  proof_assert result.vertex == state.queue[state.head]
+  proof_assert result.queue.head == state.head + 1
+  proof_assert result.queue.tail == state.tail
+  proof_assert queue_bounds(vertices, result.queue)
+  proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
+  proof_assert queue_marked_prefix(
+    vertices,
+    visited,
+    result.queue,
+    result.queue.tail,
+  )
+  proof_assert dequeue_post(vertices, state, result)
+  proof_assert dequeue_valid_post(vertices, state, result)
+  result
+}
+
+///|
 pub fn discover_and_enqueue_one(
   vertices : Int,
   edges : FixedArray[Int],
@@ -1207,6 +1266,114 @@ pub fn pop_discover_and_enqueue_one_preserve_marked(
   proof_assert queue_bounds(vertices, result.queue)
   proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
   proof_assert marked_vertex(vertices, visited, keep)
+  proof_assert pop_discover_enqueue_post(
+    vertices, edges, visited, upto, state, result,
+  )
+  result
+}
+
+///|
+pub fn pop_discover_and_enqueue_one_preserve_marked_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  state : BfsQueue,
+  upto : Int,
+) -> BfsPopDiscoverEnqueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: queue_marked_prefix(vertices, visited, state, state.tail),
+  proof_require: state.head < state.tail,
+  proof_require: state.tail < vertices,
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: result => {
+    pop_discover_enqueue_post(vertices, edges, visited, upto, state, result)
+  },
+  proof_ensure: result => queue_bounds(vertices, result.queue),
+  proof_ensure: result => {
+    queue_valid_prefix(vertices, result.queue, result.queue.tail)
+  },
+  proof_ensure: result => {
+    queue_marked_prefix(vertices, visited, result.queue, result.queue.tail)
+  },
+  proof_ensure: result => result.queue.head == state.head + 1,
+  proof_ensure: result => state.tail <= result.queue.tail,
+  proof_ensure: result => result.queue.tail <= state.tail + 1,
+} {
+  let popped = dequeue_one_preserve_marked_prefix(vertices, visited, state)
+  proof_assert dequeue_valid_post(vertices, state, popped)
+  proof_assert valid_vertex(vertices, popped.vertex)
+  proof_assert popped.vertex == state.queue[state.head]
+  proof_assert queue_bounds(vertices, popped.queue)
+  proof_assert queue_valid_prefix(vertices, popped.queue, popped.queue.tail)
+  proof_assert queue_marked_prefix(
+    vertices,
+    visited,
+    popped.queue,
+    popped.queue.tail,
+  )
+  proof_assert popped.queue.head == state.head + 1
+  proof_assert popped.queue.tail == state.tail
+  proof_assert popped.queue.tail < vertices
+  let expanded = discover_and_enqueue_one_preserve_marked_prefix(
+    vertices,
+    edges,
+    visited,
+    popped.vertex,
+    popped.queue,
+    upto,
+  )
+  proof_assert discover_enqueue_post(
+    vertices,
+    edges,
+    visited,
+    popped.vertex,
+    upto,
+    popped.queue,
+    expanded,
+  )
+  proof_assert queue_marked_prefix(
+    vertices,
+    visited,
+    expanded.queue,
+    expanded.queue.tail,
+  )
+  let result = {
+    source: popped.vertex,
+    candidate: expanded.candidate,
+    queue: expanded.queue,
+  }
+  proof_assert result.queue.head == popped.queue.head
+  proof_assert result.queue.head == state.head + 1
+  proof_assert popped.queue.tail <= result.queue.tail
+  proof_assert result.queue.tail <= popped.queue.tail + 1
+  proof_assert state.tail <= result.queue.tail
+  proof_assert result.queue.tail <= state.tail + 1
+  proof_assert !(result.candidate < vertices) ||
+    result.queue.tail == state.tail + 1
+  proof_assert !(vertices <= result.candidate) ||
+    result.queue.tail == state.tail
+  proof_assert valid_vertex(vertices, result.source)
+  proof_assert discover_prefix_post(
+    vertices,
+    edges,
+    visited,
+    result.source,
+    upto,
+    result.candidate,
+  )
+  proof_assert queue_bounds(vertices, result.queue)
+  proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
+  proof_assert queue_marked_prefix(
+    vertices,
+    visited,
+    result.queue,
+    result.queue.tail,
+  )
   proof_assert pop_discover_enqueue_post(
     vertices, edges, visited, upto, state, result,
   )

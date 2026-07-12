@@ -4,6 +4,8 @@ package "moonforge/moon_forge/graph/visited_frontier"
 // Values
 pub fn dequeue_one(Int, BfsQueue) -> BfsDequeue
 
+pub fn dequeue_one_preserve_marked_prefix(Int, FixedArray[Int], BfsQueue) -> BfsDequeue
+
 pub fn discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], Int, BfsQueue, Int) -> BfsDiscoverEnqueue
 
 pub fn discover_and_enqueue_one_preserve_marked(Int, FixedArray[Int], FixedArray[Int], Int, BfsQueue, Int, Int) -> BfsDiscoverEnqueue
@@ -45,6 +47,8 @@ pub fn parent_of(Int, FixedArray[Int], Int) -> Int
 pub fn pop_discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue
 
 pub fn pop_discover_and_enqueue_one_preserve_marked(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int, Int) -> BfsPopDiscoverEnqueue
+
+pub fn pop_discover_and_enqueue_one_preserve_marked_prefix(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue
 
 pub fn seed_and_expand_queue_steps(Int, FixedArray[Int], Int, Int) -> BfsQueue
 
