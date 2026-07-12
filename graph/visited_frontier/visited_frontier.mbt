@@ -295,6 +295,12 @@ pub(all) struct BfsInit {
 }
 
 ///|
+pub(all) struct BfsExpanded {
+  visited : FixedArray[Int]
+  queue : BfsQueue
+}
+
+///|
 pub fn seed_start_layer(
   vertices : Int,
   edges : FixedArray[Int],
@@ -793,5 +799,43 @@ pub fn seed_and_expand_queue_steps(
   proof_assert 1 <= result.tail
   proof_assert result.tail <= 1 + steps
   proof_assert seed_expand_queue_post(vertices, steps, result)
+  result
+}
+
+///|
+pub fn seed_and_expand_steps(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+  steps : Int,
+) -> BfsExpanded where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, start),
+  proof_require: 0 <= steps,
+  proof_require: steps <= vertices,
+  proof_ensure: result => seed_expand_state_post(vertices, steps, result),
+} {
+  let visited = FixedArray::make(vertices, 0)
+  proof_assert visited_shape(vertices, visited)
+  visited[start] = 1
+  proof_assert visited_shape(vertices, visited)
+  proof_assert marked_vertex(vertices, visited, start)
+  let queue = seed_start_queue(vertices, start)
+  proof_assert bfs_queue_seed_post(vertices, start, queue)
+  let expanded_queue = guarded_pop_expand_steps(
+    vertices, edges, visited, queue, vertices, steps,
+  )
+  proof_assert guarded_pop_expand_steps_post(
+    vertices, queue, steps, expanded_queue,
+  )
+  proof_assert visited_shape(vertices, visited)
+  proof_assert queue.head == 0
+  proof_assert queue.tail == 1
+  proof_assert seed_expand_queue_post(vertices, steps, expanded_queue)
+  let result = { visited, queue: expanded_queue }
+  proof_assert visited_shape(vertices, result.visited)
+  proof_assert seed_expand_queue_post(vertices, steps, result.queue)
+  proof_assert seed_expand_state_post(vertices, steps, result)
   result
 }

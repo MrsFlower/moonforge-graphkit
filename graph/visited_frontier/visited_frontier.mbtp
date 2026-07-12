@@ -369,6 +369,16 @@ predicate seed_expand_queue_post(
 }
 
 ///|
+predicate seed_expand_state_post(
+  vertices : Int,
+  steps : Int,
+  result : BfsExpanded
+) {
+  visited_shape(vertices, result.visited) &&
+  seed_expand_queue_post(vertices, steps, result.queue)
+}
+
+///|
 predicate bfs_init_post(
   vertices : Int,
   edges : FixedArray[Int],

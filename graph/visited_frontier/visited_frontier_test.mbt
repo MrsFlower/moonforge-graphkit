@@ -219,3 +219,15 @@ test "seed and expand queue steps" {
   assert_eq(queue.queue[0], 0)
   assert_eq(queue.queue[1], 2)
 }
+
+///|
+test "seed and expand steps returns visited" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let expanded = @visited_frontier.seed_and_expand_steps(4, edges, 0, 2)
+  assert_eq(expanded.queue.head, 2)
+  assert_eq(expanded.queue.tail, 2)
+  assert_true(@visited_frontier.is_marked(4, expanded.visited, 0))
+  assert_true(@visited_frontier.is_marked(4, expanded.visited, 2))
+  assert_false(@visited_frontier.is_marked(4, expanded.visited, 1))
+}

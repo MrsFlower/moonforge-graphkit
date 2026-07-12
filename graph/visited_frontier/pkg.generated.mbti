@@ -28,6 +28,8 @@ pub fn pop_discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], BfsQu
 
 pub fn seed_and_expand_queue_steps(Int, FixedArray[Int], Int, Int) -> BfsQueue
 
+pub fn seed_and_expand_steps(Int, FixedArray[Int], Int, Int) -> BfsExpanded
+
 pub fn seed_start_and_neighbors(Int, FixedArray[Int], Int) -> FixedArray[Int]
 
 pub fn seed_start_layer(Int, FixedArray[Int], Int) -> BfsSeed
@@ -46,6 +48,11 @@ pub(all) struct BfsDequeue {
 
 pub(all) struct BfsDiscoverEnqueue {
   candidate : Int
+  queue : BfsQueue
+}
+
+pub(all) struct BfsExpanded {
+  visited : FixedArray[Int]
   queue : BfsQueue
 }
 
