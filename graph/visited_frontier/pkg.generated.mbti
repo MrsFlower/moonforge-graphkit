@@ -10,7 +10,11 @@ pub fn mark_out_neighbors_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int
 
 pub fn mark_vertex(Int, FixedArray[Int], Int) -> Unit
 
+pub fn parent_of(Int, FixedArray[Int], Int) -> Int
+
 pub fn seed_start_and_neighbors(Int, FixedArray[Int], Int) -> FixedArray[Int]
+
+pub fn seed_start_neighbor_parents(Int, FixedArray[Int], Int) -> FixedArray[Int]
 
 // Errors
 

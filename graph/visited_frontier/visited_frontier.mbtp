@@ -19,6 +19,11 @@ predicate visited_shape(vertices : Int, visited : FixedArray[Int]) {
 }
 
 ///|
+predicate parent_shape(vertices : Int, parent : FixedArray[Int]) {
+  parent.length() == vertices
+}
+
+///|
 fn edge_offset(vertices : Int, source : Int, target : Int) -> Int {
   source * vertices + target
 }
@@ -137,4 +142,35 @@ predicate start_seed_post(
   visited_shape(vertices, visited) &&
   marked_vertex(vertices, visited, start) &&
   out_neighbors_marked_prefix(vertices, edges, visited, start, vertices)
+}
+
+///|
+predicate direct_parent_prefix(
+  vertices : Int,
+  edges : FixedArray[Int],
+  parent : FixedArray[Int],
+  start : Int,
+  upto : Int
+) {
+  valid_vertex_count(vertices) &&
+  adjacency_shape(vertices, edges) &&
+  parent_shape(vertices, parent) &&
+  valid_vertex(vertices, start) &&
+  0 <= upto &&
+  upto <= vertices &&
+  (∀ target : Int,
+    0 <= target && target < upto && has_edge(vertices, edges, start, target) →
+      parent[target] == start)
+}
+
+///|
+predicate start_parent_seed_post(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+  parent : FixedArray[Int]
+) {
+  parent_shape(vertices, parent) &&
+  parent[start] == start &&
+  direct_parent_prefix(vertices, edges, parent, start, vertices)
 }

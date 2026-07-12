@@ -188,3 +188,70 @@ pub fn seed_start_and_neighbors(
   )
   visited
 }
+
+///|
+pub fn parent_of(
+  vertices : Int,
+  parent : FixedArray[Int],
+  vertex : Int,
+) -> Int where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: parent_shape(vertices, parent),
+  proof_require: valid_vertex(vertices, vertex),
+  proof_ensure: result => result == parent[vertex],
+} {
+  parent[vertex]
+}
+
+///|
+pub fn seed_start_neighbor_parents(
+  vertices : Int,
+  edges : FixedArray[Int],
+  start : Int,
+) -> FixedArray[Int] where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: valid_vertex(vertices, start),
+  proof_ensure: result => start_parent_seed_post(vertices, edges, start, result),
+} {
+  let parent = FixedArray::make(vertices, vertices)
+  proof_assert parent_shape(vertices, parent)
+  parent[start] = start
+  proof_assert parent_shape(vertices, parent)
+  proof_assert parent[start] == start
+  for candidate = 0; candidate < vertices; {
+    if is_edge(vertices, edges, start, candidate) {
+      parent[candidate] = start
+      proof_assert parent_shape(vertices, parent)
+      proof_assert parent[candidate] == start
+      proof_assert ∀ target : Int,
+        0 <= target &&
+        target < candidate &&
+        has_edge(vertices, edges, start, target) →
+        parent[target] == start
+    }
+    proof_assert direct_parent_prefix(
+      vertices,
+      edges,
+      parent,
+      start,
+      candidate + 1,
+    )
+    continue candidate + 1
+  } where {
+    proof_invariant: 0 <= candidate,
+    proof_invariant: candidate <= vertices,
+    proof_invariant: direct_parent_prefix(
+      vertices, edges, parent, start, candidate,
+    ),
+  }
+  proof_assert direct_parent_prefix(vertices, edges, parent, start, vertices)
+  parent[start] = start
+  proof_assert parent_shape(vertices, parent)
+  proof_assert parent[start] == start
+  proof_assert ∀ target : Int,
+    0 <= target && target < vertices && has_edge(vertices, edges, start, target) →
+    parent[target] == start
+  proof_assert direct_parent_prefix(vertices, edges, parent, start, vertices)
+  parent
+}

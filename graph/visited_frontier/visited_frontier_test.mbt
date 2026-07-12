@@ -54,3 +54,15 @@ test "seed start and neighbors" {
   assert_false(@visited_frontier.is_marked(4, visited, 2))
   assert_true(@visited_frontier.is_marked(4, visited, 3))
 }
+
+///|
+test "seed start neighbor parents" {
+  let edges = FixedArray::make(16, 0)
+  edges[1] = 1
+  edges[3] = 1
+  let parent = @visited_frontier.seed_start_neighbor_parents(4, edges, 0)
+  assert_eq(@visited_frontier.parent_of(4, parent, 0), 0)
+  assert_eq(@visited_frontier.parent_of(4, parent, 1), 0)
+  assert_eq(@visited_frontier.parent_of(4, parent, 2), 4)
+  assert_eq(@visited_frontier.parent_of(4, parent, 3), 0)
+}
