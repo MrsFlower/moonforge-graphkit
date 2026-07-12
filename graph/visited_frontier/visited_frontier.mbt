@@ -1295,6 +1295,12 @@ pub fn seed_start_only_state(
   proof_assert visited_shape(vertices, result.visited)
   proof_assert marked_vertex(vertices, result.visited, start)
   proof_assert bfs_queue_seed_post(vertices, start, result.queue)
+  proof_assert queue_marked_prefix(
+    vertices,
+    result.visited,
+    result.queue,
+    result.queue.tail,
+  )
   proof_assert start_only_state_post(vertices, start, result)
   result
 }

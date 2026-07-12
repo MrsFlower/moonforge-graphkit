@@ -224,6 +224,22 @@ predicate bfs_queue_seed_post(
 }
 
 ///|
+predicate queue_marked_prefix(
+  vertices : Int,
+  visited : FixedArray[Int],
+  queue : BfsQueue,
+  upto : Int
+) {
+  queue_bounds(vertices, queue) &&
+  visited_shape(vertices, visited) &&
+  0 <= upto &&
+  upto <= queue.tail &&
+  (∀ i : Int,
+    0 <= i && i < upto →
+      marked_vertex(vertices, visited, queue.queue[i]))
+}
+
+///|
 predicate enqueue_post(
   vertices : Int,
   before : BfsQueue,
@@ -386,7 +402,8 @@ predicate start_only_state_post(
 ) {
   visited_shape(vertices, result.visited) &&
   marked_vertex(vertices, result.visited, start) &&
-  bfs_queue_seed_post(vertices, start, result.queue)
+  bfs_queue_seed_post(vertices, start, result.queue) &&
+  queue_marked_prefix(vertices, result.visited, result.queue, result.queue.tail)
 }
 
 ///|
