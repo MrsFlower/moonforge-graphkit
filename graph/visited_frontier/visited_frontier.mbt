@@ -282,6 +282,13 @@ pub(all) struct BfsDiscoverEnqueue {
 }
 
 ///|
+pub(all) struct BfsPopDiscoverEnqueue {
+  source : Int
+  candidate : Int
+  queue : BfsQueue
+}
+
+///|
 pub(all) struct BfsInit {
   seed : BfsSeed
   queue : BfsQueue
@@ -451,6 +458,20 @@ pub fn discover_and_enqueue_one(
   proof_ensure: result => {
     discover_enqueue_post(vertices, edges, visited, source, upto, state, result)
   },
+  proof_ensure: result => {
+    discover_prefix_post(
+      vertices,
+      edges,
+      visited,
+      source,
+      upto,
+      result.candidate,
+    )
+  },
+  proof_ensure: result => queue_bounds(vertices, result.queue),
+  proof_ensure: result => {
+    queue_valid_prefix(vertices, result.queue, result.queue.tail)
+  },
 } {
   let candidate = discover_first_unmarked_out_edge_prefix(
     vertices, edges, visited, source, upto,
@@ -493,4 +514,71 @@ pub fn discover_and_enqueue_one(
     )
     result
   }
+}
+
+///|
+pub fn pop_discover_and_enqueue_one(
+  vertices : Int,
+  edges : FixedArray[Int],
+  visited : FixedArray[Int],
+  state : BfsQueue,
+  upto : Int,
+) -> BfsPopDiscoverEnqueue where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: adjacency_shape(vertices, edges),
+  proof_require: visited_shape(vertices, visited),
+  proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
+  proof_require: state.head < state.tail,
+  proof_require: state.tail < vertices,
+  proof_require: 0 <= upto,
+  proof_require: upto <= vertices,
+  proof_ensure: result => {
+    pop_discover_enqueue_post(vertices, edges, visited, upto, result)
+  },
+} {
+  let popped = dequeue_one(vertices, state)
+  proof_assert dequeue_valid_post(vertices, state, popped)
+  proof_assert valid_vertex(vertices, popped.vertex)
+  proof_assert popped.vertex == state.queue[state.head]
+  proof_assert queue_bounds(vertices, popped.queue)
+  proof_assert queue_valid_prefix(vertices, popped.queue, popped.queue.tail)
+  proof_assert popped.queue.head == state.head + 1
+  proof_assert popped.queue.tail == state.tail
+  proof_assert popped.queue.tail < vertices
+  let expanded = discover_and_enqueue_one(
+    vertices,
+    edges,
+    visited,
+    popped.vertex,
+    popped.queue,
+    upto,
+  )
+  proof_assert discover_enqueue_post(
+    vertices,
+    edges,
+    visited,
+    popped.vertex,
+    upto,
+    popped.queue,
+    expanded,
+  )
+  let result = {
+    source: popped.vertex,
+    candidate: expanded.candidate,
+    queue: expanded.queue,
+  }
+  proof_assert valid_vertex(vertices, result.source)
+  proof_assert discover_prefix_post(
+    vertices,
+    edges,
+    visited,
+    result.source,
+    upto,
+    result.candidate,
+  )
+  proof_assert queue_bounds(vertices, result.queue)
+  proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
+  proof_assert pop_discover_enqueue_post(vertices, edges, visited, upto, result)
+  result
 }

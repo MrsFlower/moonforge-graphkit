@@ -20,6 +20,8 @@ pub fn mark_vertex(Int, FixedArray[Int], Int) -> Unit
 
 pub fn parent_of(Int, FixedArray[Int], Int) -> Int
 
+pub fn pop_discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], BfsQueue, Int) -> BfsPopDiscoverEnqueue
+
 pub fn seed_start_and_neighbors(Int, FixedArray[Int], Int) -> FixedArray[Int]
 
 pub fn seed_start_layer(Int, FixedArray[Int], Int) -> BfsSeed
@@ -43,6 +45,12 @@ pub(all) struct BfsDiscoverEnqueue {
 
 pub(all) struct BfsInit {
   seed : BfsSeed
+  queue : BfsQueue
+}
+
+pub(all) struct BfsPopDiscoverEnqueue {
+  source : Int
+  candidate : Int
   queue : BfsQueue
 }
 
