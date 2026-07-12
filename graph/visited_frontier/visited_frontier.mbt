@@ -394,10 +394,12 @@ pub fn dequeue_one(
 ) -> BfsDequeue where {
   proof_require: valid_vertex_count(vertices),
   proof_require: queue_bounds(vertices, state),
+  proof_require: queue_valid_prefix(vertices, state, state.tail),
   proof_require: state.head < state.tail,
-  proof_ensure: result => dequeue_post(vertices, state, result),
+  proof_ensure: result => dequeue_valid_post(vertices, state, result),
 } {
   let vertex = state.queue[state.head]
+  proof_assert valid_vertex(vertices, vertex)
   let queue_buffer = state.queue
   let head = state.head + 1
   let tail = state.tail
@@ -413,6 +415,11 @@ pub fn dequeue_one(
   proof_assert result.queue.head == state.head + 1
   proof_assert result.queue.tail == state.tail
   proof_assert queue_bounds(vertices, result.queue)
+  proof_assert ∀ i : Int,
+    0 <= i && i < result.queue.tail →
+    valid_vertex(vertices, result.queue.queue[i])
+  proof_assert queue_valid_prefix(vertices, result.queue, result.queue.tail)
   proof_assert dequeue_post(vertices, state, result)
+  proof_assert dequeue_valid_post(vertices, state, result)
   result
 }

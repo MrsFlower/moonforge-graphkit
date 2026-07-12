@@ -266,6 +266,18 @@ predicate dequeue_post(
 }
 
 ///|
+predicate dequeue_valid_post(
+  vertices : Int,
+  before : BfsQueue,
+  result : BfsDequeue
+) {
+  dequeue_post(vertices, before, result) &&
+  queue_valid_prefix(vertices, before, before.tail) &&
+  valid_vertex(vertices, result.vertex) &&
+  queue_valid_prefix(vertices, result.queue, result.queue.tail)
+}
+
+///|
 predicate bfs_init_post(
   vertices : Int,
   edges : FixedArray[Int],
