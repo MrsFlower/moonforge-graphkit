@@ -211,6 +211,23 @@ test "discover and enqueue one preserves marked" {
 }
 
 ///|
+test "discover and enqueue one preserves marked prefix" {
+  let edges = FixedArray::make(16, 0)
+  edges[2] = 1
+  let visited = FixedArray::make(4, 0)
+  visited[0] = 1
+  let queue = @visited_frontier.seed_start_queue(4, 0)
+  let expanded = @visited_frontier.discover_and_enqueue_one_preserve_marked_prefix(
+    4, edges, visited, 0, queue, 4,
+  )
+  assert_eq(expanded.candidate, 2)
+  assert_eq(expanded.queue.head, 0)
+  assert_eq(expanded.queue.tail, 2)
+  assert_true(@visited_frontier.is_marked(4, visited, expanded.queue.queue[0]))
+  assert_true(@visited_frontier.is_marked(4, visited, expanded.queue.queue[1]))
+}
+
+///|
 test "pop discover and enqueue one" {
   let edges = FixedArray::make(16, 0)
   edges[2] = 1

@@ -8,9 +8,13 @@ pub fn discover_and_enqueue_one(Int, FixedArray[Int], FixedArray[Int], Int, BfsQ
 
 pub fn discover_and_enqueue_one_preserve_marked(Int, FixedArray[Int], FixedArray[Int], Int, BfsQueue, Int, Int) -> BfsDiscoverEnqueue
 
+pub fn discover_and_enqueue_one_preserve_marked_prefix(Int, FixedArray[Int], FixedArray[Int], Int, BfsQueue, Int) -> BfsDiscoverEnqueue
+
 pub fn discover_first_unmarked_out_edge_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int) -> Int
 
 pub fn discover_first_unmarked_out_edge_prefix_preserve_marked(Int, FixedArray[Int], FixedArray[Int], Int, Int, Int) -> Int
+
+pub fn discover_first_unmarked_out_edge_prefix_preserve_marked_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int, BfsQueue, Int) -> Int
 
 pub fn enqueue_one(Int, BfsQueue, Int) -> BfsQueue
 
@@ -33,6 +37,8 @@ pub fn mark_out_neighbors_prefix(Int, FixedArray[Int], FixedArray[Int], Int, Int
 pub fn mark_vertex(Int, FixedArray[Int], Int) -> Unit
 
 pub fn mark_vertex_preserve_marked(Int, FixedArray[Int], Int, Int) -> Unit
+
+pub fn mark_vertex_preserve_marked_prefix(Int, FixedArray[Int], BfsQueue, Int, Int) -> Unit
 
 pub fn parent_of(Int, FixedArray[Int], Int) -> Int
 
