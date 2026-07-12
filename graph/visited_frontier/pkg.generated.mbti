@@ -36,6 +36,8 @@ pub fn seed_start_layer(Int, FixedArray[Int], Int) -> BfsSeed
 
 pub fn seed_start_neighbor_parents(Int, FixedArray[Int], Int) -> FixedArray[Int]
 
+pub fn seed_start_only_state(Int, Int) -> BfsExpanded
+
 pub fn seed_start_queue(Int, Int) -> BfsQueue
 
 // Errors

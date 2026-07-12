@@ -839,3 +839,27 @@ pub fn seed_and_expand_steps(
   proof_assert seed_expand_state_post(vertices, steps, result)
   result
 }
+
+///|
+pub fn seed_start_only_state(
+  vertices : Int,
+  start : Int,
+) -> BfsExpanded where {
+  proof_require: valid_vertex_count(vertices),
+  proof_require: valid_vertex(vertices, start),
+  proof_ensure: result => start_only_state_post(vertices, start, result),
+} {
+  let visited = FixedArray::make(vertices, 0)
+  proof_assert visited_shape(vertices, visited)
+  visited[start] = 1
+  proof_assert visited_shape(vertices, visited)
+  proof_assert marked_vertex(vertices, visited, start)
+  let queue = seed_start_queue(vertices, start)
+  proof_assert bfs_queue_seed_post(vertices, start, queue)
+  let result = { visited, queue }
+  proof_assert visited_shape(vertices, result.visited)
+  proof_assert marked_vertex(vertices, result.visited, start)
+  proof_assert bfs_queue_seed_post(vertices, start, result.queue)
+  proof_assert start_only_state_post(vertices, start, result)
+  result
+}

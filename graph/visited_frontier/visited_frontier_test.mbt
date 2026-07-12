@@ -231,3 +231,13 @@ test "seed and expand steps returns visited" {
   assert_true(@visited_frontier.is_marked(4, expanded.visited, 2))
   assert_false(@visited_frontier.is_marked(4, expanded.visited, 1))
 }
+
+///|
+test "seed start only state" {
+  let seed = @visited_frontier.seed_start_only_state(4, 2)
+  assert_eq(seed.queue.head, 0)
+  assert_eq(seed.queue.tail, 1)
+  assert_eq(seed.queue.queue[0], 2)
+  assert_true(@visited_frontier.is_marked(4, seed.visited, 2))
+  assert_false(@visited_frontier.is_marked(4, seed.visited, 0))
+}
