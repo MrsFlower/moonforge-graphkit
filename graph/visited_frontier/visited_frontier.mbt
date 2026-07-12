@@ -816,24 +816,27 @@ pub fn seed_and_expand_steps(
   proof_require: steps <= vertices,
   proof_ensure: result => seed_expand_state_post(vertices, steps, result),
 } {
-  let visited = FixedArray::make(vertices, 0)
-  proof_assert visited_shape(vertices, visited)
-  visited[start] = 1
-  proof_assert visited_shape(vertices, visited)
-  proof_assert marked_vertex(vertices, visited, start)
-  let queue = seed_start_queue(vertices, start)
-  proof_assert bfs_queue_seed_post(vertices, start, queue)
+  let seed = seed_start_only_state(vertices, start)
+  proof_assert start_only_state_post(vertices, start, seed)
   let expanded_queue = guarded_pop_expand_steps(
-    vertices, edges, visited, queue, vertices, steps,
+    vertices,
+    edges,
+    seed.visited,
+    seed.queue,
+    vertices,
+    steps,
   )
   proof_assert guarded_pop_expand_steps_post(
-    vertices, queue, steps, expanded_queue,
+    vertices,
+    seed.queue,
+    steps,
+    expanded_queue,
   )
-  proof_assert visited_shape(vertices, visited)
-  proof_assert queue.head == 0
-  proof_assert queue.tail == 1
+  proof_assert visited_shape(vertices, seed.visited)
+  proof_assert seed.queue.head == 0
+  proof_assert seed.queue.tail == 1
   proof_assert seed_expand_queue_post(vertices, steps, expanded_queue)
-  let result = { visited, queue: expanded_queue }
+  let result = { visited: seed.visited, queue: expanded_queue }
   proof_assert visited_shape(vertices, result.visited)
   proof_assert seed_expand_queue_post(vertices, steps, result.queue)
   proof_assert seed_expand_state_post(vertices, steps, result)
